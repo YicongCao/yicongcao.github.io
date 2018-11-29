@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html>
+  <!DOCTYPE html>
+<html lang="en">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1">
+  
+  <title>基于 Infer.net 的概率编程实践 - 二葱写字的地方</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+  
+  <meta name="keywords" content="二葱,生活,博客,编程,游戏">
+  
+  
+    <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico?v=1.02">
+  
+  
+    <link rel="alternate" href="/atom.xml " title="二葱写字的地方" type="application/atom+xml">
+  
+
+  <link rel="stylesheet" href="/css/style.css">
+</head></html>
+  <body>
+    <div class="container">
+      <header class="header">
+  <div class="blog-title">
+    <a href="/" class="logo">二葱写字的地方</a>
+    <div class="subtitle"></div>
+  </div>
+  <nav class="navbar">
+    <ul class="menu">
+      
+        <li class="menu-item">
+          <a href="/" class="menu-item-link">Home</a>
+        </li>
+      
+        <li class="menu-item">
+          <a href="/archives" class="menu-item-link">Archives</a>
+        </li>
+      
+        <li class="menu-item">
+          <a href="/about" class="menu-item-link">About</a>
+        </li>
+      
+    </ul>
+  </nav>
+</header>
+<article class="post">
+  <div class="post-title">
+    <h1 class="article-title">基于 Infer.net 的概率编程实践</h1>
+  </div>
+   <div class="post-meta">
+    <span class="post-time">2018-11-30</span>
+  </div>
+  <div class="post-content">
+    <h1 id="复盘世界杯？——基于-Infer-net-的概率编程实践"><a href="#复盘世界杯？——基于-Infer-net-的概率编程实践" class="headerlink" title="复盘世界杯？——基于 Infer.net 的概率编程实践"></a>复盘世界杯？——基于 Infer.net 的概率编程实践</h1><p><img src="https://ws1.sinaimg.cn/large/006tNbRwgy1fxpefj2nd3j3078079glm.jpg" alt="上帝掷骰子吗？"></p>
+<p>AI方向有几大经典问题：</p>
+<ul>
+<li>分类</li>
+<li>聚类</li>
+<li>回归</li>
+<li>推荐</li>
+<li>特征检测</li>
+</ul>
+<p>许多复杂问题，都可以通过简化成经典问题，适用最基本的算法解决。比如:</p>
+<ul>
+<li>计算机视觉</li>
+<li>自然语言处理</li>
+<li>语音识别</li>
+<li>有监督和无监督学习</li>
+<li>强化学习</li>
+</ul>
+<p>在解决复杂问题上，存在着多种学派，它们分别有一些代表算法：</p>
+<table>
+<thead>
+<tr>
+<th>派别</th>
+<th>起源</th>
+<th>代表算法</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>符号主义</td>
+<td>逻辑学、哲学</td>
+<td>演绎算法</td>
+</tr>
+<tr>
+<td>联结主义</td>
+<td>神经科学</td>
+<td>反向传播算法(BP)</td>
+</tr>
+<tr>
+<td>进化主义</td>
+<td>生物学</td>
+<td>遗传算法</td>
+</tr>
+<tr>
+<td>贝叶斯派</td>
+<td>统计学</td>
+<td>概率推理</td>
+</tr>
+</tbody>
+</table>
+<p>每个学派，都不是通往AI的唯一路径，概率编程也不是。深度学习已经在自动驾驶、破解围棋等方面取得了突破进展，但其缺点是需要大量的标注数据，训练速度慢，且不具备可理解性。而概率编程，可以很方便的针对某个具体问题，定义一个概率模型，然后运用Infer.net去求解这个模型。得到模型之后，就能应用在新的数据上。</p>
+<p>为了展开今天的题目，我们需要先温习一下 <strong>概率论</strong> 的知识，然后介绍 <strong>Infer.net</strong> 的工作原理，最后我们看几个例子，了解概率编程是如何实践的。最后，也是最让人兴奋的环节，我们来脑暴一下概率编程有哪些可供落地的 <strong>应用场景</strong> 。</p>
+<h2 id="0x01-朴素贝叶斯公式"><a href="#0x01-朴素贝叶斯公式" class="headerlink" title="0x01 朴素贝叶斯公式"></a>0x01 朴素贝叶斯公式</h2><p>这里先解释什么是条件概率：<br><img src="https://ws3.sinaimg.cn/large/006tNbRwgy1fxpefoox0jg301o00j0al.gif" alt="" title="P(A|B)"></p>
+<p>表示事件B已经发生的前提下，事件A发生的概率，叫做事件B发生下事件A的条件概率。其基本求解公式为：<img src="assets/gif.latex" alt="" title="P(A|B)=\frac{P(AB)}{P(B)}">。</p>
+<p>贝叶斯定理之所以有用，是因为我们在生活中经常遇到这种情况：我们可以很容易直接得出P(A|B)，P(B|A)则很难直接得出，但我们更关心P(B|A)，贝叶斯定理就为我们打通从P(A|B)获得P(B|A)的道路。</p>
+<p>下面不加证明地直接给出贝叶斯定理：</p>
+<p><img src="https://ws3.sinaimg.cn/large/006tNbRwgy1fxpefub8c1g305b0170sh.gif" alt="" title="P(B|A)=\frac{P(A|B)P(B)}{P(A)}"></p>
+<p>为了很好的说明这个问题，在这里举一个例子：</p>
+<blockquote>
+<p>玩英雄联盟占到中国总人口的60%，不玩英雄联盟的人数占到40%：</p>
+<p>为了便于数学叙述，这里我们用变量X来表示取值情况，根据概率的定义以及加法原则，我们可以写出如下表达式：</p>
+<p>P(X=玩lol)=0.6；P(X=不玩lol)=0.4。</p>
+</blockquote>
+<p>这个概率是统计得到的，即X的概率分布已知，我们称其为 <strong>先验概率(prior probability)</strong> ；</p>
+<blockquote>
+<p>另外玩lol中80%是男性，20%是小姐姐,不玩lol中20%是男性，80%是小姐姐,这里我用离散变量Y表示性别取值，同时写出相应的条件概率分布：</p>
+<p>P(Y=男性|X=玩lol)=0.8，P(Y=小姐姐|X=玩lol)=0.2</p>
+<p>P(Y=男性|X=不玩lol)=0.2，P(Y=小姐姐|X=不玩lol)=0.8</p>
+</blockquote>
+<p>那么我想问在已知玩家为男性的情况下，他是lol玩家的概率是多少：</p>
+<p>依据贝叶斯准则可得：</p>
+<p>P(X=玩lol|Y=男性)=P(Y=男性|X=玩lol)*P(X=玩lol)/</p>
+<p>[ P(Y=男性|X=玩lol)*P(X=玩lol)+P(Y=男性|X=不玩lol)*P(X=不玩lol)]</p>
+<p>最后算出的P(X=玩lol|Y=男性)称之为X的 <strong>后验概率</strong> ，即它获得是在观察到事件Y发生后得到的</p>
+<h2 id="0x02-常见的分布形式"><a href="#0x02-常见的分布形式" class="headerlink" title="0x02 常见的分布形式"></a>0x02 常见的分布形式</h2><ul>
+<li>伯努利分布</li>
+</ul>
+<p><img src="https://ws3.sinaimg.cn/large/006tNbRwgy1fxpefy1ga9j307y01kwea.jpg" alt="img"></p>
+<ul>
+<li>正态分布</li>
+</ul>
+<p>在自然界中广泛存在的分布形式，男人和女人的身高和体重、考试成绩、球员发挥，都符合正态分布。</p>
+<p><img src="https://ws1.sinaimg.cn/large/006tNbRwgy1fxpefzxux9j30jg0cxaa9.jpg" alt=""></p>
+<ul>
+<li>Gamma分布</li>
+<li>Beta分布</li>
+<li>Dirichlet分布</li>
+</ul>
+<h2 id="0x03-概率编程的思想"><a href="#0x03-概率编程的思想" class="headerlink" title="0x03 概率编程的思想"></a>0x03 概率编程的思想</h2><p>计算机的行为是完全符合因果逻辑的，而现实世界是量子的，充满各种可能性，只有在你进行观察的时候才会输出特定结果（薛定谔的猫）， <strong>没办法用C++里的bool、int、class进行模拟</strong> 。</p>
+<p>拿手写识别来说，用户手写的hill，在计算机看来是hill还是bull呢？甚至是train也有可能，但显然它是hill相比它是helicopter要靠谱多了。那么怎么用编程语言来表达这种不确定性呢？我们假定是random_var，这个random_var代表可能识别出的几个单词，但不能确定到底是哪个。</p>
+<p>random_var的含义，可以是一组字符串，它会关联一种概率分布。这就代表了计算机对这种可能性的理解，也就达成了用概率模型描述现实世界的目的。</p>
+<p>那么如何获知，它是hill还是bull的概率呢？</p>
+<ul>
+<li>站在用户的角度看，这是一个因果模型</li>
+<li>运用概率编程的思想，可以构建一个模型，将用户想输入的文本转换成手写图形，根据每个用户的习惯不同，手写图形的风格也会不同</li>
+</ul>
+<p>那么反过来，我们如何根据这个图形，来获知它所代表的文本呢？概率编程，就是应用贝叶斯推理的方法，根据先验概率和部分常数，来得到hill和bull的后验概率。用这种思想，来完成手写识别的操作。</p>
+<h2 id="0x04-对Infer-net的简单归纳"><a href="#0x04-对Infer-net的简单归纳" class="headerlink" title="0x04 对Infer.net的简单归纳"></a>0x04 对Infer.net的简单归纳</h2><p>对于各路机器学习算法来说，解决问题无非分两大步：求解模型和应用模型。对scikit-learn、ml.net这类框架来说，是用输入训练数据来fit预先选定的模型，然后通过测试集来检验模型的性能。而对Infer.net来说，首先你要基于贝叶斯网络定义你的数学模型，然后运用框架来协助你推理得到模型中的不确定因素，模型才算训练完成，而后可以应用到测试集上面。</p>
+<p>也就是说，Infer.net做的事情，可以通过以下不同的方式表达，但其实都是一个意思：</p>
+<ul>
+<li>给定先验概率(观测数据)和所需常数，用来推理后验概率</li>
+<li>定义一套数学过程，用来求解其中的变量</li>
+<li>用来求解方程，只不过方程中的变量一般都是概率分布</li>
+<li>用概率分布代表事件或属性，只有在观察或推理时，事件或属性才有确定的值</li>
+</ul>
+<h3 id="求解模型"><a href="#求解模型" class="headerlink" title="求解模型"></a>求解模型</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">graph LR</span><br><span class="line">    Input --&gt; *Model</span><br><span class="line">    *Model --&gt; Output</span><br></pre></td></tr></table></figure>
+<p>(带星号的，表示未知量)</p>
+<p>定义好模型之后，Model中存在可变量，Input和Output都是定量，根据上图可利用Infer.net求解出Model中的可变量，也就得到了训练好的Model。</p>
+<h3 id="应用模型："><a href="#应用模型：" class="headerlink" title="应用模型："></a>应用模型：</h3><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">graph LR</span><br><span class="line">    Input --&gt; Model</span><br><span class="line">    Model --&gt; *Output</span><br></pre></td></tr></table></figure>
+<p>在应用模型时，模型已经是已知的，而Output变成未知的。给定新的Input，根据上图可利用Infer.net求解可变量Output。</p>
+<h2 id="0x05-一些例子"><a href="#0x05-一些例子" class="headerlink" title="0x05 一些例子"></a>0x05 一些例子</h2><p>在本项目中，根据我自己的学习进度，会逐渐增加一些例子，有些来自微软，有些是原创。我按自己的理解，通过学习这些例程，可以逐渐增加对概率编程的理解，帮助我们更好地用infer.net来对概率编程进行实践。</p>
+<h3 id="抛硬币"><a href="#抛硬币" class="headerlink" title="抛硬币"></a>抛硬币</h3><p>我们连续抛两次硬币，假设硬币质量均匀，求这两次都是正面朝上的概率。</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">Variable&lt;<span class="keyword">bool</span>&gt; firstCoin = Variable.Bernoulli(<span class="number">0.5</span>);</span><br><span class="line">Variable&lt;<span class="keyword">bool</span>&gt; secondCoin = Variable.Bernoulli(<span class="number">0.5</span>);</span><br><span class="line">Variable&lt;<span class="keyword">bool</span>&gt; bothHeads = firstCoin &amp; secondCoin;</span><br><span class="line">InferenceEngine engine = <span class="keyword">new</span> InferenceEngine();</span><br><span class="line">Console.WriteLine(<span class="string">"Probability both coins are heads: "</span> + engine.Infer(bothHeads));</span><br><span class="line"></span><br><span class="line"><span class="comment">// 输出：</span></span><br><span class="line"><span class="comment">// Probability both coins are heads: Bernoulli(0.25)</span></span><br></pre></td></tr></table></figure>
+<p>如同前面所说，概率编程中，需要为现实问题定义一个模型。抛硬币的模型里，包含两个事件：第一次是正面和第二次是正面。它们都服从伯努利分布，我们从infer.net中新建两个伯努利分布，来代表这两个事件发生。我们要计算的后验概率，即第一次和第二次都是正面，可以定义为<code>bothHeads = firstCoin &amp; secondCoin</code>。</p>
+<p>在这个模型中，firstCoin和secondCoin都是已知其先验概率（硬币质量均匀，正面概率0.5）的伯努利分布，我们用infer.net来推理bothHeads的后验概率。输出结果是Bernoulli(0.25)，也就是说infer.net计算出来的这枚硬币第一次和第二次都是正面的概率，是0.25。</p>
+<p>这个例子只是为了演示概率编程中的符号含义，现在我们做一个小小的调整。我们假定 <strong>第一次已经抛出正面</strong> ，让infer.net来计算最终的bothHeads，看它是否能正确的得出调整后的结果，也就是0.5。</p>
+<p>我们在进行推理（调用engine.Infer(…)函数）之前，插入这样一行：</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">firstCoin.ObservedValue = <span class="literal">true</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 调整后的输出</span></span><br><span class="line"><span class="comment">// Probability both coins are heads: Bernoulli(0.5)</span></span><br></pre></td></tr></table></figure>
+<p>可以观察到，infer.net很“聪明”地得到了正确的结果。这里值得注意一点，为什么我们不给firstCoin本身赋值、而是要给<code>firstCoin.ObservedValue</code>赋值呢？可以动手试试看：</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">firstCoin = <span class="literal">true</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 调整后的输出</span></span><br><span class="line"><span class="comment">// Probability both coins are heads: Bernoulli(0.25)</span></span><br></pre></td></tr></table></figure>
+<p>因为我们构建的模型中，最终事件bothHeads仍然是由firstCoin和secondCoin两个事件同时发生定义的。在这个模型中，firstCoin有可能触发了（正面）、也有可能没触发（反面），只有在进行infer的时候，才会约束它处于已触发的状态（正面）。我们上面提到，不能用高级语言里的bool、int来为现实世界建模，就是因为现实世界的模型里每个事件都是未知的，它都要服从一个概率分布，而不是直接将其定义为true或者false，只有在这个模型运行起来、或是进行观察的时候，这个事件才会具有确定的值。这就是把<code>Variable&lt;bool&gt;</code>和<code>bool</code>区分开来的地方：如果你要假定firstCoin事件已经发生，那么把它的 <strong>观测值</strong> ，即<code>ObservedValue</code>进行赋值即可。</p>
+<p>如果你联想起来了“薛定谔的猫”实验，那么就说明你已经理解概率编程的思想了，我们继续。</p>
+<h3 id="解方程"><a href="#解方程" class="headerlink" title="解方程"></a>解方程</h3><p>为了说明“infer.net做的事情就是求解模型中的未知量”，我们来看一个解方程的例子。我们都记得圆周长的公式：C = 2πr。我们假设一个圆的周长是4π，用infer.net来求它的半径。</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">Variable&lt;<span class="keyword">double</span>&gt; r = Variable.Random(<span class="keyword">new</span> Gaussian(<span class="number">1</span>, <span class="number">1</span>)).Named(<span class="string">"radius"</span>);</span><br><span class="line">Variable&lt;<span class="keyword">double</span>&gt; len = ((Variable&lt;<span class="keyword">double</span>&gt;)<span class="number">4</span> * Math.PI).Named(<span class="string">"length"</span>);</span><br><span class="line">Variable&lt;<span class="keyword">double</span>&gt; currlen = ((Variable&lt;<span class="keyword">double</span>&gt;)<span class="number">2</span> * r * Math.PI).Named(<span class="string">"curr length"</span>);</span><br><span class="line">Variable.ConstrainEqual(currlen, len);</span><br><span class="line">InferenceEngine engine = <span class="keyword">new</span> InferenceEngine();</span><br><span class="line">engine.ShowFactorGraph = <span class="literal">true</span>;</span><br><span class="line">Console.WriteLine(<span class="string">$"r = <span class="subst">&#123;engine.Infer(r)&#125;</span>"</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 输出</span></span><br><span class="line"><span class="comment">// r = Gaussian.PointMass(2)</span></span><br></pre></td></tr></table></figure>
+<p><img src="https://ws1.sinaimg.cn/large/006tNbRwgy1fxpeg3oacoj30e90ll3zd.jpg" alt="解方程.png"></p>
+<p>运行程序，我们不仅得到了r = 2的结果，还得到了一张流程图。在设置推理引擎的ShowFactorGraph字段为true之后，infer.net就会自动将概率模型，用流程图的形式打印出来。而且流程图上明确的标注了radius、current length和length，这是因为我们使用了<code>.Named(&quot;radius&quot;)</code>这种LINQ语法。这是C#语言的一颗语法糖，它允许你在定义变量的时候直接指定它的名字，而不需要再另起一行，再编写<code>r.Name = &quot;radius&quot;;</code>。</p>
+<p>infer.net中可以对变量进行约束，就是指<code>Variable.ConstrainEqual(currlen, len);</code>这一行，它保证两个变量在该模型中无论怎样波动，其观测值都是相等的。类似的，还有<code>Variable.ConstrainTrue</code>、<code>Variable.ConstrainBetween</code>、<code>Variable.ConstrainRandom</code>等其它约束条件。我们的整个模型（方程），可以认为就是由这一行定义出来的。</p>
+<p>我们虽然将半径表达成高斯分布的形式，但得到的结果却是一个质点。是因为在这个模型里，infer.net正确地推断出了半径的概率分布只集中在x=2上。我们再次演示了，infer.net做的事情，就是求解模型中的不确定量。这个模型，就可以当成方程来理解。 <strong>只要你能把现实问题用方程的形式列出来，那么infer.net就能帮你求解这个问题。</strong> </p>
+<h3 id="贝叶斯点机"><a href="#贝叶斯点机" class="headerlink" title="贝叶斯点机"></a>贝叶斯点机</h3><p>前面两个例子只是个hello world，现在看一个稍微现实一点的例程。我们试着实现一个贝叶斯点机 - <a href="http://jmlr.org/papers/v1/herbrich01a.html" target="_blank" rel="noopener">Bayes Point Machine</a> (R. Herbrich, T. Graepel, and C. Campbell,  <strong>Bayes Point Machines</strong> , JMLR, 2001) ，用来根据顾客的收入和年龄，预测他是否会购买我们的商品。我们手里拿着训练集和测试集，先对模型进行求解，然后进行应用。</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 训练集</span></span><br><span class="line"><span class="keyword">double</span>[] incomes = &#123; <span class="number">63</span>, <span class="number">16</span>, <span class="number">28</span>, <span class="number">55</span>, <span class="number">22</span>, <span class="number">20</span> &#125;;  </span><br><span class="line"><span class="keyword">double</span>[] ages = &#123; <span class="number">38</span>, <span class="number">23</span>, <span class="number">40</span>, <span class="number">27</span>, <span class="number">18</span>, <span class="number">40</span> &#125;;  </span><br><span class="line"><span class="keyword">bool</span>[] willBuy = &#123; <span class="literal">true</span>, <span class="literal">false</span>, <span class="literal">true</span>, <span class="literal">true</span>, <span class="literal">false</span>, <span class="literal">false</span> &#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 符号表示</span></span><br><span class="line">Vector[] xdata = <span class="keyword">new</span>  Vector[incomes.Length];  </span><br><span class="line"><span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; xdata.Length; i++)  </span><br><span class="line">  xdata[i] = Vector.FromArray(incomes[i], ages[i], <span class="number">1</span>);  </span><br><span class="line">VariableArray&lt;Vector&gt; x = Variable.Observed(xdata);  </span><br><span class="line"></span><br><span class="line">VariableArray&lt;<span class="keyword">bool</span>&gt; y = Variable.Observed(willBuy, x.Range);</span><br></pre></td></tr></table></figure>
+<p>贝叶斯点机（Bayes Point Machine）进行二元分类的原理如下：</p>
+<ul>
+<li>用向量x代表输入样本、向量w代表模型中的权重向量，计算两个向量的内积 w*x</li>
+<li>如果w*x为正，则预测结果为true，如果为负，则预测结果为false</li>
+</ul>
+<p>根据训练集构建一个贝叶斯点机的本质，实际上就是用infer.net来学习权重向量w的后验分布。在这个预测顾客是否购买的问题里，样本并不是线性分布的，为了防止w对样本过拟合，所以需要把w*x表示为高斯分布的形式，加入一些噪声。因为实际上，购买行为并不是确定的，而是会受其他因素影响的，这种行为符合高斯分布。在模型中加入少量噪声方差即可。所以购买问题里的模型，是这样定义的：</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 模型构建</span></span><br><span class="line">Variable&lt;Vector&gt; w = Variable.Random(<span class="keyword">new</span> VectorGaussian(Vector.Zero(<span class="number">3</span>), PositiveDefiniteMatrix.Identity(<span class="number">3</span>)));  </span><br><span class="line">Range j = y.Range;  </span><br><span class="line"><span class="keyword">double</span> noise = <span class="number">0.1</span>;</span><br><span class="line">y[j] = Variable.GaussianFromMeanAndVariance(Variable.InnerProduct(w, x[j]),noise)&gt;<span class="number">0</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 求解模型：推理w</span></span><br><span class="line">InferenceEngine engine = <span class="keyword">new</span> InferenceEngine(<span class="keyword">new</span> ExpectationPropagation());  </span><br><span class="line">VectorGaussian wPosterior = engine.Infer&lt;VectorGaussian&gt;(w);  </span><br><span class="line">Console.WriteLine(<span class="string">"Dist over w=\n"</span>+wPosterior);</span><br></pre></td></tr></table></figure>
+<p>在应用模型时，也就是在编码的过程中，会发现“将训练集和测试集放到模型中”的逻辑是重复的，所以可以将其抽成一个函数。然后给出一些测试集的分类效果：</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// "Fit" data into model</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">BayesPointMachine</span> (<span class="params"><span class="keyword">double</span>[] incomes, <span class="keyword">double</span>[] ages, Variable&lt;Vector&gt; w, VariableArray&lt;<span class="keyword">bool</span>&gt; y</span>)</span></span><br><span class="line"><span class="function"></span>&#123; <span class="comment">// Create x vector, augmented by 1</span></span><br><span class="line">  Range j = y.Range; Vector[] xdata = <span class="keyword">new</span> Vector[incomes.Length];</span><br><span class="line">  <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; xdata.Length; i++)  </span><br><span class="line">    xdata[i] = Vector.FromArray(incomes[i], ages[i], <span class="number">1</span>);</span><br><span class="line">  VariableArray&lt;Vector&gt; x = Variable.Observed(xdata,j); <span class="comment">// Bayes Point Machine double noise = 0.1;  </span></span><br><span class="line">  y[j] = Variable.GaussianFromMeanAndVariance(Variable.InnerProduct(w, x[j]),noise)&gt;<span class="number">0</span>; </span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 应用模型</span></span><br><span class="line"><span class="keyword">double</span>[] incomesTest = &#123; <span class="number">58</span>, <span class="number">18</span>, <span class="number">22</span> &#125;;  </span><br><span class="line"><span class="keyword">double</span>[] agesTest = &#123; <span class="number">36</span>, <span class="number">24</span>, <span class="number">37</span> &#125;;  </span><br><span class="line">VariableArray&lt;<span class="keyword">bool</span>&gt; ytest = Variable.Array&lt;<span class="keyword">bool</span>&gt;(<span class="keyword">new</span> Range(agesTest.Length));  </span><br><span class="line">BayesPointMachine(incomesTest, agesTest, Variable.Random(wPosterior), ytest);  </span><br><span class="line">Console.WriteLine(<span class="string">"output=\n"</span> + engine.Infer(ytest));</span><br><span class="line"></span><br><span class="line"><span class="comment">// 输出</span></span><br><span class="line">classifier output=  </span><br><span class="line">[<span class="meta">0</span>] Bernoulli(<span class="number">0.9555</span>)  </span><br><span class="line">[<span class="meta">1</span>] Bernoulli(<span class="number">0.1565</span>)  </span><br><span class="line">[<span class="meta">2</span>] Bernoulli(<span class="number">0.287</span>)</span><br></pre></td></tr></table></figure>
+<h3 id="球队排名"><a href="#球队排名" class="headerlink" title="球队排名"></a>球队排名</h3><p>为现实世界建立概率模型，还有一个重要意义就是可以加深对现实世界本身的理解。事实上，infer.net在微软产品中一个重要应用，就是 <strong>HALO5（光环5）</strong> 的战局匹配系统。而且MSDN上也是用了下面这个例子来演示infer.net的强大，我最开始也是看的这个例程，当时被<code>bool</code>和<code>Variable&lt;bool&gt;</code>搞得一脸懵逼 23333。</p>
+<p>为了让这个例子变得有趣一点，我把例程中的<code>Player0..4</code>映射成了足球队名，然后把2018年世界杯淘汰赛的胜负数据给输到里面，让我们来看看谁强谁弱。</p>
+<p><img src="https://ws1.sinaimg.cn/large/006tNbRwgy1fxpeg777krj31a10u0k00.jpg" alt="世界杯淘汰赛结果"></p>
+<p>模型是这样的：</p>
+<ul>
+<li>（符号表示）所有球队实力水平服从正态分布，其初始实力值为<code>Gaussian(6, 9)</code>（表示实力均值为6，方差为9）</li>
+<li>（符号表示）假设球队每场比赛的发挥水平，是实力水平的加噪声版本，同样服从正态分布，噪声方差也为9</li>
+<li>（约束条件）对每场比赛来说，胜方的发挥水平大于负方的发挥水平</li>
+</ul>
+<p>代码是这样的：</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">using</span> System;</span><br><span class="line"><span class="keyword">using</span> System.Linq;</span><br><span class="line"><span class="keyword">using</span> Microsoft.ML.Probabilistic;</span><br><span class="line"><span class="keyword">using</span> Microsoft.ML.Probabilistic.Distributions;</span><br><span class="line"><span class="keyword">using</span> Microsoft.ML.Probabilistic.Models;</span><br><span class="line"></span><br><span class="line"><span class="keyword">namespace</span> <span class="title">myApp</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">class</span> <span class="title">PlayerRank</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">Run</span>(<span class="params"></span>)</span></span><br><span class="line"><span class="function"></span>        &#123;</span><br><span class="line">            <span class="comment">// The winner and loser in each of samples games</span></span><br><span class="line">            <span class="keyword">var</span> squadProjection = <span class="keyword">new</span>[] &#123; <span class="string">"乌拉圭"</span>, <span class="string">"葡萄牙"</span>, <span class="string">"法国"</span>, <span class="string">"阿根廷"</span>, <span class="string">"巴西"</span>, <span class="string">"墨西哥"</span>, <span class="string">"比利时"</span>, <span class="string">"日本"</span>, <span class="string">"西班牙"</span>, <span class="string">"俄罗斯"</span>, <span class="string">"克罗地亚"</span>, <span class="string">"丹麦"</span>, <span class="string">"瑞典"</span>, <span class="string">"瑞士"</span>, <span class="string">"哥伦比亚"</span>, <span class="string">"英格兰"</span> &#125;;</span><br><span class="line">            <span class="comment">// Index                       0        1       2       3       4       5        6         7      8        9        10        11      12     13     14         15</span></span><br><span class="line">            <span class="keyword">var</span> winnerData = <span class="keyword">new</span>[] &#123; <span class="number">0</span>, <span class="number">2</span>, <span class="number">4</span>, <span class="number">6</span>, <span class="number">9</span>, <span class="number">10</span>, <span class="number">12</span>, <span class="number">15</span>, <span class="number">2</span>, <span class="number">6</span>, <span class="number">10</span>, <span class="number">15</span>, <span class="number">2</span>, <span class="number">10</span>, <span class="number">6</span>, <span class="number">2</span> &#125;;</span><br><span class="line">            <span class="keyword">var</span> loserData = <span class="keyword">new</span>[] &#123; <span class="number">1</span>, <span class="number">3</span>, <span class="number">5</span>, <span class="number">7</span>, <span class="number">8</span>, <span class="number">11</span>, <span class="number">13</span>, <span class="number">14</span>, <span class="number">0</span>, <span class="number">4</span>, <span class="number">9</span>, <span class="number">12</span>, <span class="number">6</span>, <span class="number">15</span>, <span class="number">15</span>, <span class="number">10</span> &#125;;</span><br><span class="line"></span><br><span class="line">            <span class="comment">// Define the statistical model as a probabilistic program </span></span><br><span class="line">            <span class="keyword">var</span> game = <span class="keyword">new</span> Range(winnerData.Length);</span><br><span class="line">            <span class="keyword">var</span> player = <span class="keyword">new</span> Range(winnerData.Concat(loserData).Max() + <span class="number">1</span>);</span><br><span class="line">            <span class="keyword">var</span> playerSkills = Variable.Array&lt;<span class="keyword">double</span>&gt;(player);</span><br><span class="line">            playerSkills[player] = Variable.GaussianFromMeanAndVariance(<span class="number">6</span>, <span class="number">9</span>).ForEach(player);</span><br><span class="line"></span><br><span class="line">            <span class="keyword">var</span> winners = Variable.Array&lt;<span class="keyword">int</span>&gt;(game);</span><br><span class="line">            <span class="keyword">var</span> losers = Variable.Array&lt;<span class="keyword">int</span>&gt;(game);</span><br><span class="line"></span><br><span class="line">            <span class="keyword">using</span> (Variable.ForEach(game))</span><br><span class="line">            &#123;</span><br><span class="line">                <span class="comment">// The player performance is a noisy version of their skill</span></span><br><span class="line">                <span class="keyword">var</span> winnerPerformance = Variable.GaussianFromMeanAndVariance(playerSkills[winners[game]], <span class="number">9</span>);</span><br><span class="line">                <span class="keyword">var</span> loserPerformance = Variable.GaussianFromMeanAndVariance(playerSkills[losers[game]], <span class="number">9</span>);</span><br><span class="line"></span><br><span class="line">                <span class="comment">// The winner performed better in this game</span></span><br><span class="line">                Variable.ConstrainTrue(winnerPerformance &gt; loserPerformance);</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="comment">// Attach the data to the model</span></span><br><span class="line">            winners.ObservedValue = winnerData;</span><br><span class="line">            losers.ObservedValue = loserData;</span><br><span class="line"></span><br><span class="line">            <span class="comment">// Run inference</span></span><br><span class="line">            <span class="keyword">var</span> inferenceEngine = <span class="keyword">new</span> InferenceEngine();</span><br><span class="line">            inferenceEngine.ShowFactorGraph = <span class="literal">true</span>;</span><br><span class="line">            <span class="keyword">var</span> inferredSkills = inferenceEngine.Infer&lt;Gaussian[]&gt;(playerSkills);</span><br><span class="line"></span><br><span class="line">            <span class="comment">// The inferred skills are uncertain, which is captured in their variance</span></span><br><span class="line">            <span class="keyword">var</span> orderedPlayerSkills = inferredSkills</span><br><span class="line">                .Select((s, i) =&gt; <span class="keyword">new</span> &#123; Player = i, Skill = s &#125;)</span><br><span class="line">                .OrderByDescending(ps =&gt; ps.Skill.GetMean()); <span class="comment">// Oh上帝啊，LINQ可真美</span></span><br><span class="line"></span><br><span class="line">            <span class="keyword">foreach</span> (<span class="keyword">var</span> playerSkill <span class="keyword">in</span> orderedPlayerSkills)</span><br><span class="line">            &#123;</span><br><span class="line">                Console.WriteLine(<span class="string">$"Player <span class="subst">&#123;playerSkill.Player&#125;</span>: <span class="subst">&#123;squadProjection[playerSkill.Player]&#125;</span> skill: <span class="subst">&#123;playerSkill.Skill&#125;</span>"</span>);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>输出是这样的：</p>
+<figure class="highlight yml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">Iterating:</span></span><br><span class="line"><span class="string">.........|.........|.........|.........|.........|</span> <span class="number">50</span></span><br><span class="line"><span class="string">Player</span> <span class="number">2</span><span class="string">:</span> <span class="string">法国</span> <span class="attr">skill:</span> <span class="string">Gaussian(10.12,</span> <span class="number">5.145</span><span class="string">)</span></span><br><span class="line"><span class="string">Player</span> <span class="number">6</span><span class="string">:</span> <span class="string">比利时</span> <span class="attr">skill:</span> <span class="string">Gaussian(8.234,</span> <span class="number">4.955</span><span class="string">)</span></span><br><span class="line"><span class="string">Player</span> <span class="number">10</span><span class="string">:</span> <span class="string">克罗地亚</span> <span class="attr">skill:</span> <span class="string">Gaussian(8.234,</span> <span class="number">4.955</span><span class="string">)</span></span><br><span class="line"><span class="string">Player</span> <span class="number">0</span><span class="string">:</span> <span class="string">乌拉圭</span> <span class="attr">skill:</span> <span class="string">Gaussian(6.451,</span> <span class="number">6.532</span><span class="string">)</span></span><br><span class="line"><span class="string">Player</span> <span class="number">15</span><span class="string">:</span> <span class="string">英格兰</span> <span class="attr">skill:</span> <span class="string">Gaussian(6.404,</span> <span class="number">4.8</span><span class="string">)</span></span><br><span class="line"><span class="string">Player</span> <span class="number">4</span><span class="string">:</span> <span class="string">巴西</span> <span class="attr">skill:</span> <span class="string">Gaussian(6.157,</span> <span class="number">6.343</span><span class="string">)</span></span><br><span class="line"><span class="string">Player</span> <span class="number">9</span><span class="string">:</span> <span class="string">俄罗斯</span> <span class="attr">skill:</span> <span class="string">Gaussian(6.157,</span> <span class="number">6.343</span><span class="string">)</span></span><br><span class="line"><span class="string">Player</span> <span class="number">12</span><span class="string">:</span> <span class="string">瑞典</span> <span class="attr">skill:</span> <span class="string">Gaussian(5.825,</span> <span class="number">6.184</span><span class="string">)</span></span><br><span class="line"><span class="string">Player</span> <span class="number">3</span><span class="string">:</span> <span class="string">阿根廷</span> <span class="attr">skill:</span> <span class="string">Gaussian(5.311,</span> <span class="number">7.824</span><span class="string">)</span></span><br><span class="line"><span class="string">Player</span> <span class="number">7</span><span class="string">:</span> <span class="string">日本</span> <span class="attr">skill:</span> <span class="string">Gaussian(5.013,</span> <span class="number">7.58</span><span class="string">)</span></span><br><span class="line"><span class="string">Player</span> <span class="number">11</span><span class="string">:</span> <span class="string">丹麦</span> <span class="attr">skill:</span> <span class="string">Gaussian(5.013,</span> <span class="number">7.58</span><span class="string">)</span></span><br><span class="line"><span class="string">Player</span> <span class="number">14</span><span class="string">:</span> <span class="string">哥伦比亚</span> <span class="attr">skill:</span> <span class="string">Gaussian(4.668,</span> <span class="number">7.371</span><span class="string">)</span></span><br><span class="line"><span class="string">Player</span> <span class="number">1</span><span class="string">:</span> <span class="string">葡萄牙</span> <span class="attr">skill:</span> <span class="string">Gaussian(4.665,</span> <span class="number">7.454</span><span class="string">)</span></span><br><span class="line"><span class="string">Player</span> <span class="number">5</span><span class="string">:</span> <span class="string">墨西哥</span> <span class="attr">skill:</span> <span class="string">Gaussian(4.606,</span> <span class="number">7.419</span><span class="string">)</span></span><br><span class="line"><span class="string">Player</span> <span class="number">8</span><span class="string">:</span> <span class="string">西班牙</span> <span class="attr">skill:</span> <span class="string">Gaussian(4.606,</span> <span class="number">7.419</span><span class="string">)</span></span><br><span class="line"><span class="string">Player</span> <span class="number">13</span><span class="string">:</span> <span class="string">瑞士</span> <span class="attr">skill:</span> <span class="string">Gaussian(4.538,</span> <span class="number">7.382</span><span class="string">)</span></span><br></pre></td></tr></table></figure>
+<p>毫无疑问，最强冠军法国是实力最强的球队，比利时和克罗地亚并列第二，然鹅有趣的是， <strong>早早出局乌拉圭的实力值竟然高于夺得了第四名的英格兰</strong> 。那么究竟是人性的扭曲，还是道德的沦陷呢？下面请收看</p>
+<p><img src="https://ws3.sinaimg.cn/large/006tNbRwgy1fxpegbcz1mg305a03mwhp.gif" alt="啪"></p>
+<p>我错了，容我好好解释……（你为什么这么熟练）</p>
+<p><img src="https://ws3.sinaimg.cn/large/006tNbRwgy1fxpege3x97j31a10u0k00.jpg" alt="世界杯淘汰赛结果"></p>
+<p>注意看实力数值，skill是以Gaussian(均值，方差)的形式表示的。infer.net得出的均值现在存在争议，但方差应该是大家可以理解的。乌拉圭比赛场数只有英格兰的一半，所以对其实力的推断置信度更低，方差也就更大。乌拉圭的实力方差为6.532，英格兰为4.8，框架认为它对英格兰的实力估值更准确，没毛病。</p>
+<figure class="highlight yml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">Player</span> <span class="number">0</span><span class="string">:</span> <span class="string">乌拉圭</span> <span class="attr">skill:</span> <span class="string">Gaussian(6.451,</span> <span class="number">6.532</span><span class="string">)</span></span><br><span class="line"><span class="string">Player</span> <span class="number">15</span><span class="string">:</span> <span class="string">英格兰</span> <span class="attr">skill:</span> <span class="string">Gaussian(6.404,</span> <span class="number">4.8</span><span class="string">)</span></span><br></pre></td></tr></table></figure>
+<p>我们再看一下英格兰和乌拉圭的比赛历程：</p>
+<ul>
+<li>英格兰首轮胜哥伦比亚，第二轮胜瑞典，第三轮负于克罗地亚，在争夺3、4名的比赛中负于比利时</li>
+<li>乌拉圭首轮胜葡萄牙，第二轮负于法国队，出局</li>
+</ul>
+<p>有两个值得注意的地方：</p>
+<ul>
+<li>哥伦比亚和葡萄牙都只有一轮比赛的数据，如果只考虑第一轮比赛情况，英格兰和乌拉圭实力应该是均等的</li>
+<li>英格兰后两轮输给的球队，一支是克罗地亚、一支是比利时，他们都是法国队的手下败将，虽然乌拉圭第二轮就淘汰了，但他输给的是最后的冠军法国队</li>
+</ul>
+<p>另外，看过世界杯的鹅们，还记得瑞典和瑞士那场比赛有多水吗？整场比赛无聊至极，双方像打太极一样互相推让，懂礼貌，讲文明，最后靠一粒乌龙球结束了比赛。也就是说，infer.net认为二轮游的乌拉圭稍强于踩了狗屎运的英格兰，这事儿一点都不冤。也反映出，除了实力，签运真的很重要哇~~~</p>
+<p>今年行政搞的猜球活动，着实让大家high了一把。决赛那晚，楼主500W金币全押克罗地亚，输了个精光，像坐过山车一样，贼刺激。如果时间能重来，用机器来辅助做这个决策，结果会不会有所变化呢？</p>
+<p>现在我们计算的实力榜，是包含了决赛结果的。如果我们去掉法国和克罗地亚的比赛结果，重新计算一次，还能得出法国强于克罗地亚的结果吗？</p>
+<figure class="highlight yml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 排除掉决赛结果的输出</span></span><br><span class="line"></span><br><span class="line"><span class="string">Player</span> <span class="number">2</span><span class="string">:</span> <span class="string">法国</span> <span class="attr">skill:</span> <span class="string">Gaussian(9.311,</span> <span class="number">5.719</span><span class="string">)</span></span><br><span class="line"><span class="string">Player</span> <span class="number">10</span><span class="string">:</span> <span class="string">克罗地亚</span> <span class="attr">skill:</span> <span class="string">Gaussian(9.052,</span> <span class="number">5.792</span><span class="string">)</span></span><br><span class="line"><span class="string">Player</span> <span class="number">6</span><span class="string">:</span> <span class="string">比利时</span> <span class="attr">skill:</span> <span class="string">Gaussian(8.13,</span> <span class="number">4.911</span><span class="string">)</span></span><br><span class="line"><span class="string">Player</span> <span class="number">15</span><span class="string">:</span> <span class="string">英格兰</span> <span class="attr">skill:</span> <span class="string">Gaussian(6.489,</span> <span class="number">4.851</span><span class="string">)</span></span><br><span class="line"><span class="string">Player</span> <span class="number">0</span><span class="string">:</span> <span class="string">乌拉圭</span> <span class="attr">skill:</span> <span class="string">Gaussian(6.327,</span> <span class="number">6.466</span><span class="string">)</span></span><br><span class="line"><span class="string">Player</span> <span class="number">9</span><span class="string">:</span> <span class="string">俄罗斯</span> <span class="attr">skill:</span> <span class="string">Gaussian(6.285,</span> <span class="number">6.444</span><span class="string">)</span></span><br><span class="line"><span class="string">Player</span> <span class="number">4</span><span class="string">:</span> <span class="string">巴西</span> <span class="attr">skill:</span> <span class="string">Gaussian(6.14,</span> <span class="number">6.333</span><span class="string">)</span></span><br><span class="line"><span class="string">Player</span> <span class="number">12</span><span class="string">:</span> <span class="string">瑞典</span> <span class="attr">skill:</span> <span class="string">Gaussian(5.841,</span> <span class="number">6.193</span><span class="string">)</span></span><br><span class="line"><span class="string">Player</span> <span class="number">3</span><span class="string">:</span> <span class="string">阿根廷</span> <span class="attr">skill:</span> <span class="string">Gaussian(5.185,</span> <span class="number">7.735</span><span class="string">)</span></span><br><span class="line"><span class="string">Player</span> <span class="number">11</span><span class="string">:</span> <span class="string">丹麦</span> <span class="attr">skill:</span> <span class="string">Gaussian(5.144,</span> <span class="number">7.705</span><span class="string">)</span></span><br><span class="line"><span class="string">Player</span> <span class="number">7</span><span class="string">:</span> <span class="string">日本</span> <span class="attr">skill:</span> <span class="string">Gaussian(4.995,</span> <span class="number">7.566</span><span class="string">)</span></span><br><span class="line"><span class="string">Player</span> <span class="number">14</span><span class="string">:</span> <span class="string">哥伦比亚</span> <span class="attr">skill:</span> <span class="string">Gaussian(4.685,</span> <span class="number">7.382</span><span class="string">)</span></span><br><span class="line"><span class="string">Player</span> <span class="number">1</span><span class="string">:</span> <span class="string">葡萄牙</span> <span class="attr">skill:</span> <span class="string">Gaussian(4.64,</span> <span class="number">7.44</span><span class="string">)</span></span><br><span class="line"><span class="string">Player</span> <span class="number">8</span><span class="string">:</span> <span class="string">西班牙</span> <span class="attr">skill:</span> <span class="string">Gaussian(4.632,</span> <span class="number">7.435</span><span class="string">)</span></span><br><span class="line"><span class="string">Player</span> <span class="number">5</span><span class="string">:</span> <span class="string">墨西哥</span> <span class="attr">skill:</span> <span class="string">Gaussian(4.603,</span> <span class="number">7.417</span><span class="string">)</span></span><br><span class="line"><span class="string">Player</span> <span class="number">13</span><span class="string">:</span> <span class="string">瑞士</span> <span class="attr">skill:</span> <span class="string">Gaussian(4.542,</span> <span class="number">7.384</span><span class="string">)</span></span><br></pre></td></tr></table></figure>
+<p>是的，根据之前的战绩，法国仍然强于克罗地亚，选法国才是理性的。而且方差越小，置信度就越高。另外，由于法国队实力估值的下降，英格兰在这个这次的计算结果超过了乌拉圭，弯道发车了。</p>
+<h3 id="在线学习"><a href="#在线学习" class="headerlink" title="在线学习"></a>在线学习</h3><p>有些应用场景里，会有源源不断的样本数据持续过来，这就要求模型要能够根据新数据不断迭代更新。这种场景，就叫在线学习，可以参考例程中的 OnlineLearning.cs。</p>
+<h3 id="MotifFinder：概率编程在生物学领域的应用"><a href="#MotifFinder：概率编程在生物学领域的应用" class="headerlink" title="MotifFinder：概率编程在生物学领域的应用"></a>MotifFinder：概率编程在生物学领域的应用</h3><p>Motif，在生物学中表示DNA上的一段特征序列，会不断重复出现。寻找motif一般有两种方法：</p>
+<ul>
+<li>基于规则查找</li>
+<li>基于概率模型查找</li>
+</ul>
+<p>前者可以简单理解为string::find，然而很多motif中都包含可变的片段。也就是说，基于概率的查找，最能拟合真实的DNA motif。</p>
+<p>如果我们还记得DNA的双螺旋结构、和ACGT这四种核苷酸的话，就来看一段示例DNA序列：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">CCTATCGA</span><br><span class="line"></span><br><span class="line">TATGGTAA</span><br><span class="line"></span><br><span class="line">AGATATAG</span><br><span class="line"></span><br><span class="line">ATATTGCG</span><br></pre></td></tr></table></figure>
+<p>其中的motif，就是<code>TAT*G</code>。</p>
+<p><img src="https://ws3.sinaimg.cn/large/006tNbRwgy1fxpeggodq3j30u010hqv6.jpg" alt="输出示例"></p>
+<p>在这段例子中，我们自动生成一段8位长度的motif片段，每一位都是离散分布的A C G T。我们定义的模型，就是用有权重的狄利克雷分布表示特征片段，均等分布的狄利克雷分布表示背景噪声。借助infer.net，来推理出特征片段的分布。代码比较冗长，大家仍然可以直接参考例程MotifFinder.cs。</p>
+<p>其实，Infer.net能做的事情远不止这些，战局匹配系统、推荐系统、索引系统、语义识别，都可以用Infer.net来实现。只要能用概率模型来建模的现实问题，都可以用Infer.net求解，它的优点，就是让你免于编写冗长的推理代码，让你专注于建模本身。</p>
+<h2 id="一段背景：微软研究院"><a href="#一段背景：微软研究院" class="headerlink" title="一段背景：微软研究院"></a>一段背景：微软研究院</h2><p>如果你都读到这里了，不妨听我说完最后的废话。全程都忘了说，Infer.net 是微软上个月刚刚开源出来的概率编程框架，实现了一套Csoft语法。支持.net core、.net framework和Mono，也就意味着，它可以运行在mac、win10、linux和无数IOT设备上。</p>
+<p>微软研究院是盖茨在1991年创立的研究机构，其中一个固定的目标为“支持长期的计算机科学硏究而不受产品周期所限”。</p>
+<p>微软研究院的研究范畴可以被归类为10大项：</p>
+<ol>
+<li><a href="https://zh.wikipedia.org/wiki/%E6%BC%94%E7%AE%97%E6%B3%95" title="算法" target="_blank" rel="noopener">算法</a>与理论</li>
+<li>硬件发展</li>
+<li><a href="https://zh.wikipedia.org/wiki/%E4%BA%BA%E6%A9%9F%E4%BA%92%E5%8B%95" title="人机交互" target="_blank" rel="noopener">人机交互</a></li>
+<li>机械的学习、适应与智能</li>
+<li><a href="https://zh.wikipedia.org/wiki/%E5%A4%9A%E5%AA%92%E9%AB%94" title="多媒体" target="_blank" rel="noopener">多媒体</a>与视频技术</li>
+<li>数据搜索、截取与<a href="https://zh.wikipedia.org/wiki/%E7%9F%A5%E8%AD%98%E7%AE%A1%E7%90%86" title="知识管理" target="_blank" rel="noopener">知识管理</a></li>
+<li>信息安全与加密技术</li>
+<li>社会计算</li>
+<li>软件发展</li>
+<li>系统、<a href="https://zh.wikipedia.org/wiki/%E8%AE%A1%E7%AE%97%E6%9C%BA%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84" title="计算机体系结构" target="_blank" rel="noopener">计算机体系结构</a>、可携系统与网上</li>
+</ol>
+<p><strong>今天所讲述的Infer.net，即诞生于微软剑桥研究院。</strong> 除此之外，在微软亚洲研究院还诞生了我们熟知的Xbox Kinect、微软小冰和小娜、Skype中文翻译等。二十年来，从微软亚洲研究院走出了李开复（创新工场）、张亚勤（百度总裁）、王坚（阿里云）、林斌（小米合伙人）、张宏江（金山CEO）、赵峰（海尔CTO）、芮勇（联想CTO）、汤晓鸥（商汤科技）。整部中国互联网的兴衰史，都有微软的痕迹在。</p>
+<p>sandy跟我两个人学习的AI课题，在MSRA从事这个方向的，其实有二十来个组：</p>
+<ul>
+<li>系统组</li>
+<li>网络多媒体组</li>
+<li>创新工程组</li>
+<li>理论组</li>
+<li>知识挖掘组</li>
+<li>视觉计算组</li>
+<li>语音组</li>
+<li>自然语言计算组</li>
+<li>多媒体计算组</li>
+<li>软件分析组</li>
+<li>数据挖掘与企业智能化组</li>
+<li>多媒体搜索与挖掘组</li>
+<li>网络图形组</li>
+<li>城市计算组</li>
+<li>机器学习组</li>
+<li>云计算及移动计算组</li>
+<li>社会计算组</li>
+<li>大数据挖掘组</li>
+</ul>
+<p>不同于鹅厂曾经设立的研究院，微软的研究院致力于将最新的科研成果转化为商业产品，和进行纯粹的学术研究，而不是与业务部门抢占用户份额。所以不管微软这些年有多么饱受批评，我都很尊敬这家公司，这是能推动人类文明向前迈进的真正伟大的科技公司。微软的技术、苹果的专制、谷歌的开放，都是我认为这个行业十分迷人的地方，从这些公司诞生的技术，也一直照耀着我们每个从业人员、成为支撑着我们进行日常工作和学习的动力吧。</p>
+
+  </div>
+  <div class="post-footer">
+    
+
+    <a href="#top" class="top">Back to Top</a>
+  </div>
+</article>
+<footer>
+  &copy; 2018
+  <span class="author">
+    二葱
+  </span>
+</footer>
+    </div>
+  </body>
+</html>
