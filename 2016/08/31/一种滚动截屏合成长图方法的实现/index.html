@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html>
+  <!DOCTYPE html>
+<html lang="en">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1">
+  
+  <title>一种滚动截屏合成长图方法的实现 - 二葱写字的地方</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+  
+  <meta name="keywords" content="截图,matlab,特征">
+  
+  
+    <link rel="shortcut icon" type="image/x-icon" href="/images/favicon.png?v=1.02">
+  
+  
+    <link rel="alternate" href="/atom.xml " title="二葱写字的地方" type="application/atom+xml">
+  
+
+  <link rel="stylesheet" href="/css/style.css">
+</head></html>
+  <body>
+    <div class="container">
+      <header class="header">
+  <div class="blog-title">
+    <a href="/" class="logo">二葱写字的地方</a>
+    <div class="subtitle"></div>
+  </div>
+  <nav class="navbar">
+    <ul class="menu">
+      
+        <li class="menu-item">
+          <a href="/" class="menu-item-link">Home</a>
+        </li>
+      
+        <li class="menu-item">
+          <a href="/archives" class="menu-item-link">Archives</a>
+        </li>
+      
+        <li class="menu-item">
+          <a href="/about" class="menu-item-link">About</a>
+        </li>
+      
+    </ul>
+  </nav>
+</header>
+<article class="post">
+  <div class="post-title">
+    <h1 class="article-title">一种滚动截屏合成长图方法的实现</h1>
+  </div>
+   <div class="post-meta">
+    <span class="post-time">2016-08-31</span>
+  </div>
+  <div class="post-content">
+    <p>之前做一个截图需求的时候，根据资料实现了利用GDI+或者DirectX获得任一窗口的截屏。在制作完成之后，给自己提了两个新的需求：滚动截屏和视频截屏。这篇文章主要讨论滚动截屏的实现。</p>
+<p>滚动截屏主要由两个模块构成：</p>
+<ul>
+<li>首先要让窗口“滚”起来，获取到每次滚动的画面</li>
+<li>然后把几张截图合成一个长图</li>
+</ul>
+<p>首先讨论“滚”的实现，我尝试了三种方法：</p>
+<ul>
+<li>使用SendInput，向指定窗体发送鼠标中键的输入，只能根据mouseData字段确定滚动多少行；</li>
+<li>发送WM_VSCROLL消息，可以传入SB_LINEDOWN或者SB_PAGEDOWN参数；</li>
+<li>发送WM_MOUSEWHEEL消息，其中wParam的低四位可以确定中键按下，高四位设置成滚动行数（乘120，正数向前滚，负数向后滚，说到这里，如果用户设置了鼠标滚动方向为反向，那这个参数一定要改），lParam的低高四位分别是鼠标指针的x、y坐标。同方法(1)，也能控制滚动多少行。</li>
+</ul>
+<p>三种方法的共同点是都只能按行数进行滚动，一次滚动的行数是在这里定义的，大家应该都手动设置过：</p>
+<p><img src="https://ws3.sinaimg.cn/large/006tNbRwgy1fxpxd51vlxj30b80blwep.jpg" alt=""></p>
+<p>那么一行的高度是多少像素呢？答案是不确定，跟每个应用程序设置的该行的字体大小有关。又考虑到Windows在高DPI情况下对文本进行的缩放操作，行高变得更加的不确定。这也为后面合成长图造成了一定困难。嗯这个坑后面再填，继续讨论“滚”的问题。</p>
+<p><img src="https://ws4.sinaimg.cn/large/006tNbRwgy1fxpxd7cwcmj30qw0c3wfw.jpg" alt=""></p>
+<p>后两种直接发送Windows消息的方法，经过验证需要发送到正确的Window才能起作用。有人会问，我直接获取到一个窗口的句柄就好了呀。事实上一个窗口内部可能包含多个可滚动的Window，如果不指定是对哪个Child Window进行滚动的话，直接对主窗口发消息是没有任何效果的。使用Spy++也可以看到，对于IE浏览器，要追溯到直接显示Content的Child Window需要解析多少层：</p>
+<p><img src="https://ws1.sinaimg.cn/large/006tNbRwgy1fxpxdaivplj30xc0nxdiy.jpg" alt=""></p>
+<p>所以最终使用第一种SendInput的方法，对指定窗口发送一个输入，让系统判断该让谁滚动起来。对于浏览器而言，通常只有网页内容是可滚动的，这样就不需要再手动对地址栏、导航栏做类型判别了；而对于有多个可滚动Window的窗体，需要把鼠标指针放在要滚动的地方，这也不难做到。</p>
+<p>小结一下，我们现在已经可以做到让任一窗口滚动起来了，并且可以控制滚动的行数，先小小高兴一下，因为大麻烦在后头XD</p>
+<p>==================我是华丽丽哒分割线====================</p>
+<p>经过上面的步骤，我们获取到了三张示例截图，接下来就要用这三张图生成一张长图：</p>
+<p><img src="https://ws1.sinaimg.cn/large/006tNbRwgy1fxpxddi249j30ph07gwmn.jpg" alt=""></p>
+<p>程序中我们不对这些截图进行输出，而是使用Bitmap对象在内存中操作。接下来需要思考长图要怎样生成了。</p>
+<p>事实上滚动截屏的过程中，对每张截图是有要求的：每次不能滚动太多，要恰好留出一部分内容来，让这部分内容也出现在下次滚动的画面中。利用这部分区域，就能生成连续的画面。</p>
+<p>在每张截图中，发生变化的只有显示网页内容的区域，而标题栏、导航栏、网页的Head Bar和窗口底部的状态栏都是没有产生变化。好，那这部分内容就是首先需要剔除掉的。然后要做的，就是获取每两张截图的公共区域，得到公共区域分别出现在两张截图中的位置，在合成时将第二张图的坐标减去公共区域的高度，这样就能完美的合成出互不重复的长图了。</p>
+<p>经过以上思考，给自己列出的开发安排如下：</p>
+<ul>
+<li>MileStone 1、实现向某个窗口发送滚动消息，然后看着它滚动起来（需要完成Get窗口句柄、向其发送消息的工作）</li>
+<li>MileStone 2、实现将每次滚动后的截图保存下来（需要完成按窗口句柄截屏并保存截图的工作）</li>
+<li>MileStone 3、实现检测每张截图中发生变化的区域（需要按像素检查，涉及细节比较多）（方法：逐行扫描，找出相同的部分，有上、下两部分，那么取中间不同的部分就是发生变化的区域了）</li>
+<li>MileStone 4、实现检测该区域中，每次滚动内容的起点和终点，即试图查找尾部的重合区域的起始行号（方法：在变化区域中逐行扫描，找出相同的部分，那么这部分的line_number_start和line_number_end就是区域边缘了）</li>
+<li>MileStone 5、实现拼接截取出来的连续内容的方法</li>
+</ul>
+<p>MileStone 1、2的代码太菜，就直接贴上不解释了：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">VOID <span class="title">ScrollLines</span><span class="params">(<span class="keyword">const</span> UINT lines = <span class="number">5</span>)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	INPUT in;</span><br><span class="line">	in.type = INPUT_MOUSE;</span><br><span class="line">	in.mi.dx = <span class="number">0</span>;</span><br><span class="line">	in.mi.dy = <span class="number">0</span>;</span><br><span class="line">	in.mi.dwFlags = MOUSEEVENTF_WHEEL;</span><br><span class="line">	in.mi.time = <span class="number">0</span>;</span><br><span class="line">	in.mi.dwExtraInfo = <span class="number">0</span>;</span><br><span class="line">	in.mi.mouseData = <span class="number">0</span><span class="number">-120</span>*lines;</span><br><span class="line">	SendInput(<span class="number">1</span>,&amp;in,<span class="keyword">sizeof</span>(in));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function">VOID <span class="title">MakeScrollingShotsToFile</span><span class="params">(<span class="keyword">const</span> UINT count = <span class="number">5</span>, <span class="keyword">const</span> UINT eachScrollLines = <span class="number">5</span>, <span class="keyword">const</span> TCHAR* saveDirPath=<span class="literal">NULL</span>, <span class="keyword">const</span> UINT delayMiliSeconds=<span class="number">1000</span>)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	UINT counter = count;</span><br><span class="line">	<span class="keyword">while</span> (counter--&gt;<span class="number">0</span>)</span><br><span class="line">	&#123;</span><br><span class="line">		ShotForeWindowToFile(saveDirPath);</span><br><span class="line">		ScrollLines(eachScrollLines);</span><br><span class="line">		Sleep(delayMiliSeconds);</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function">BOOL <span class="title">ShotForeWindowToFile</span><span class="params">(<span class="keyword">const</span> TCHAR* saveDirPath=<span class="literal">NULL</span>)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	HWND hTargetWindow = GetForegroundWindow();</span><br><span class="line">	WINDOWPLACEMENT windowPlacement;</span><br><span class="line">	windowPlacement.length = <span class="keyword">sizeof</span>(WINDOWPLACEMENT);</span><br><span class="line">	GetWindowPlacement(hTargetWindow, &amp;windowPlacement);</span><br><span class="line">	<span class="keyword">int</span> left, right, top, bottom;</span><br><span class="line">	<span class="keyword">switch</span>(windowPlacement.flags)</span><br><span class="line">	&#123;</span><br><span class="line">	<span class="keyword">case</span> <span class="number">0</span>:</span><br><span class="line">		left = windowPlacement.rcNormalPosition.left;</span><br><span class="line">		right = windowPlacement.rcNormalPosition.right;</span><br><span class="line">		top = windowPlacement.rcNormalPosition.top;</span><br><span class="line">		bottom = windowPlacement.rcNormalPosition.bottom;</span><br><span class="line">		<span class="keyword">break</span>;</span><br><span class="line">	<span class="keyword">case</span> <span class="number">2</span>:</span><br><span class="line">		left = <span class="number">0</span>;</span><br><span class="line">		right = <span class="number">0</span>;</span><br><span class="line">		top = <span class="number">0</span>;</span><br><span class="line">		bottom = <span class="number">0</span>;</span><br><span class="line">		<span class="keyword">break</span>;</span><br><span class="line">	<span class="keyword">case</span> <span class="number">1</span>:</span><br><span class="line">		<span class="built_in">std</span>::wcout&lt;&lt;<span class="string">"Window minimized..."</span>&lt;&lt;<span class="built_in">std</span>::<span class="built_in">endl</span>;</span><br><span class="line">		<span class="keyword">return</span> FALSE;</span><br><span class="line">	<span class="keyword">default</span>:</span><br><span class="line">		<span class="built_in">std</span>::wcout&lt;&lt;<span class="string">"Something happened..."</span>&lt;&lt;<span class="built_in">std</span>::<span class="built_in">endl</span>;</span><br><span class="line">		<span class="keyword">return</span> FALSE;</span><br><span class="line">	&#125;</span><br><span class="line">	ScreenShotToFile(saveDirPath, left, top, right, bottom);</span><br><span class="line">	<span class="keyword">return</span> TRUE;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//ScreenShotToFile和ScreenShotGDIToFile函数的实现在上一篇文章中提到过，就不再重复了，前者是对后者GDI方式和DX方式实现的包装</span></span><br></pre></td></tr></table></figure>
+<p>MileStone 3、4、5：</p>
+<p>在准备直接对Bitmap对象进行操作时，发现微软只提供了GetPixel方法用来按照(x,y)位置坐标获取每个点的像素信息，想想看遍历一副1024x768的图像要调用七十多万次这个函数，后果简直……</p>
+<p><img src="https://ws4.sinaimg.cn/large/006tNbRwgy1fxpxdqx6cij301r01rdft.jpg" alt=""></p>
+<p>所以放弃使用Bitmap类，考虑将字节数组导出，直接对其进行处理。</p>
+<p>其实答主本科学的专业就是做图像处理（咦，答主？额，知乎上多了= =），很快想到了用Matlab对上面提出的拼接方法进行快速验证，验证成功后再用C++实现一遍，这样最后写C++的时候也踏实一点。</p>
+<p>考虑到Matlab处理矩阵的便利程度，还有对后期移植到C++的需要，要尽量少的使用Matlab的<strong>高级函数</strong>，不然在Matlab里写起来方便，用C++重写时会蛋疼无比。好吧，如果你问哪些算是Matlab的高级函数……</p>
+<p><strong>imabsdiff</strong>：求图像差异，比较两幅图像的绝对差异，差值小于0时，赋绝对值，可直接用来检测变化区域（和不变的区域XD）。</p>
+<figure class="highlight matlab"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&gt;&gt; Image1=imload(<span class="string">'S1.bmp'</span>); Image2=imload(<span class="string">'S2.bmp'</span>);</span><br><span class="line">&gt;&gt; <span class="built_in">figure</span>;imshow(imabsdiff(Image1,Image2));</span><br></pre></td></tr></table></figure>
+<p> 输出结果是这样的：</p>
+<p><img src="https://ws3.sinaimg.cn/large/006tNbRwgy1fxpxe1a5alj30nf0mk170.jpg" alt=""></p>
+<p>其中被减掉的黑色区域就是<strong>两张截图中的公共区域</strong>：IE标题栏、导航栏、网页的Header Bar、状态栏。比起在Bitmap类里一个pixel一个pixel地手动操作像素、或是一层一层for循环里先把unsigned short转换成signed int16然后依次处理RGB三个颜色通道接着#￥%…（_…&amp;*说不下去了有没有，感动到哭有没有</p>
+<p><img src="https://ws2.sinaimg.cn/large/006tNbRwgy1fxpxe3jujmj301r01rdft.jpg" alt=""></p>
+<p><strong>ismember</strong>：判断一个变量是否属于第二个变量，可用来检测第一张图像中的某一行是否出现在第二张图像中。</p>
+<figure class="highlight matlab"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&gt;&gt; [existence, linenumber]=<span class="built_in">ismember</span>(Image1(:,:,<span class="number">1</span>),Image2(:,:,<span class="number">1</span>),<span class="string">'rows'</span>); <span class="comment">%只处理红色</span></span><br><span class="line">&gt;&gt; <span class="built_in">plot</span>(existence);</span><br></pre></td></tr></table></figure>
+<p>你会得到一张图表：</p>
+<p><img src="https://ws3.sinaimg.cn/large/006tNbRwgy1fxpxe7b63cj30fm0e374p.jpg" alt=""></p>
+<p>纵轴只有俩值，0和1。那么这个小表子代表什么意思呢？代表第一张图里的每一行（行号是横坐标）在第二张图里是否存在内容完全一样的行。existence是一个1乘以图像高度的布尔矩阵，linenumber是同样尺寸的矩阵，里面的值是如果对应行存在的话，对应第二张图的行号。直接定位出滚动过程中<strong>两张图衔接的区域</strong>有没有！！！</p>
+<p><img src="https://ws2.sinaimg.cn/large/006tNbRwgy1fxpxe9q4wyj301r01rdft.jpg" alt=""></p>
+<p><strong>matchFeatures</strong>：寻找匹配的特征点。</p>
+<figure class="highlight matlab"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&gt;&gt; [match_bool,match_int]=matchFeatures(Image1(:,:,<span class="number">1</span>),Image2(:,:,<span class="number">1</span>));</span><br></pre></td></tr></table></figure>
+<p> 这次代码更短是不是？只有一行，让我们瞧瞧match_bool这个矩阵里写的是什么：</p>
+<p><img src="https://ws2.sinaimg.cn/large/006tNbRwgy1fxpxedv1u1j30500a93yl.jpg" alt=""></p>
+<p>第一张图里的第924行，对应第二张图里的第273行，还有在上面没显示出来的，第762行对应第二张图里的第111行。那么我们看看这几行之间对应哪些信息呢？</p>
+<p><img src="https://ws3.sinaimg.cn/large/006tNbRwgy1fxpxeff39yj31hc0u04qp.jpg" alt=""></p>
+<p>还用再说什么吗？开头写完这一行，就可以直接写程序结尾了有没有！！！</p>
+<p><img src="https://ws4.sinaimg.cn/large/006tNbRwgy1fxpxeh3yw2j301r01rdft.jpg" alt=""></p>
+<p>答主眼睁睁地看着自己玩high了，继续敲出下面的代码：</p>
+<figure class="highlight matlab"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">Gray1=rgb2gray(Image1);Gray2=rgb2gray(Image2); <span class="comment">% 转灰度图</span></span><br><span class="line"><span class="comment">% indexPairs=matchFeatures(Gray1,Gray2);</span></span><br><span class="line">points1 = detectHarrisFeatures(Gray1); <span class="comment">% 使用Harris检测算法求角点</span></span><br><span class="line">points2 = detectHarrisFeatures(Gray2);</span><br><span class="line">[features1, valid_points1] = extractFeatures(Gray1, points1); <span class="comment">% 提取相邻特征</span></span><br><span class="line">[features2, valid_points2] = extractFeatures(Gray2, points2);</span><br><span class="line">indexPairs = matchFeatures(features1, features2); <span class="comment">% 匹配两张图的特征</span></span><br><span class="line">matchedPoints1 = valid_points1(indexPairs(:, <span class="number">1</span>), :); <span class="comment">% 第一张图像的原始点</span></span><br><span class="line">matchedPoints2 = valid_points2(indexPairs(:, <span class="number">2</span>), :); <span class="comment">% 第二张图像的对应点</span></span><br><span class="line"><span class="built_in">figure</span>; showMatchedFeatures(Gray1, Gray2, matchedPoints1, matchedPoints2);</span><br></pre></td></tr></table></figure>
+<p>大概标了下注释，其中提到了“角点”，那么角点是什么呢？</p>
+<p><img src="https://ws3.sinaimg.cn/large/006tNbRwgy1fxpxekfp1wj30w70n2dje.jpg" alt=""></p>
+<p>原谅我直接把专业课的PPT拉了过来，怎么样，没看懂吧？</p>
+<p>课上直接放这个我也没懂，哈哈，最讨厌这么有意思的东西全被学术用语给毁了，那么<strong>角点</strong>是什么呢？类似抛物线中由升转降的顶点，角点就是图像中黑块和白块之间的连接点，如果你玩过“别踩白块”的话，一眼就能看懂（角点在交界处，用绿色标出）：</p>
+<p><img src="https://ws2.sinaimg.cn/large/006tNbRwgy1fxpxemqxdhj3062061we9.jpg" alt=""></p>
+<p>在一般的图像中，这些点就是角点：</p>
+<p><img src="https://ws3.sinaimg.cn/large/006tNbRwgy1fxpxeom3gkj307c07adhl.jpg" alt=""></p>
+<p>那么得到角点意味着什么呢？比如返校前我在我的工位拍了张图留作纪念，在毕业后回到工位又拍了一张，位置相同，但亮度、色调、曝光值总会有所出入，将角点作为图像的特征点，就能得到如下结果：</p>
+<p><img src="https://ws2.sinaimg.cn/large/006tNbRwgy1fxpxeql55wj30b908j79o.jpg" alt=""></p>
+<p>直接识别出临走前物品摆放的位置，还能跟现在的位置对应起来有没有！！！</p>
+<p>注意上面求角点所用的Harris算法，如果写成“detectHarrisFeatures(gpuI,……)”还可以用GPU来加速，硬件加速啊有没有有没有！！！</p>
+<p>都解释完了，那么把两张截图放上去是什么效果呢？</p>
+<p><img src="https://ws4.sinaimg.cn/large/006tNbRwgy1fxpxeueolvj30nf0mkwnm.jpg" alt=""></p>
+<p>可以看出地址栏的文字被识别到了、选项卡上网页的标题被识别到了、甚至“MSDN中文网”几个大字也被识别到了（好吧并没有”D”），什么？你问那片shi黄色的东西是什么鬼？瞅见黄色区域上边儿的绿色标记没有？再看看底下的密集的红色标记，这就是刚才提到的“两张图之间衔接的区域啊”……就算不用来做滚动截屏，把截图中的“人物特征”提取出来，直接扔到黄色图片数据库的分类器里，直接就是黄图检测有没有，妈妈再也不用担心我的学习！！！</p>
+<p><img src="https://ws4.sinaimg.cn/large/006tNbRwgy1fxpxewq0dej301r01rdft.jpg" alt=""></p>
+<p>导师问我为什么跪在Matlab面前敲代码。。。</p>
+<p>==================我是华丽丽哒分割线====================</p>
+<p>好了，规则如下：不准使用Matlab的高级函数，载入和绘图函数除外，按照最开始提出的思路依次检测：网页内容区域、两张图衔接区域的行号，然后把两张图连起来。前两步直接逐行扫描，至于拼接图片嘛……你猜在Matlab里要怎么写？</p>
+<figure class="highlight matlab"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">%拼两张图</span></span><br><span class="line">Image12 = [Image1(起始行号:结束行号,:,:); Image2(起始行号:结束行号,:,:)];</span><br><span class="line"></span><br><span class="line"><span class="comment">%拼三张图</span></span><br><span class="line">Image123 = [Image1(起始行号:结束行号,:,:); Image2(起始行号:结束行号,:,:); Image3(起始行号:结束行号,:,:)];</span><br></pre></td></tr></table></figure>
+<p><img src="https://ws4.sinaimg.cn/large/006tNbRwgy1fxpxf3kyuaj301r01rdft.jpg" alt=""></p>
+<p>那么我们现在可以直接看代码了：</p>
+<figure class="highlight matlab"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br></pre></td><td class="code"><pre><span class="line">Image1=imread(<span class="string">'S1.bmp'</span>); Image2=imread(<span class="string">'S2.bmp'</span>); Image3=imread(<span class="string">'S3.bmp'</span>);</span><br><span class="line"><span class="comment">% turn uint8 into double used in matrix</span></span><br><span class="line">Image1=im2double(Image1); Image2=im2double(Image2); Image3=im2double(Image3);</span><br><span class="line"><span class="comment">% retrieve rgb matrix from above two image</span></span><br><span class="line">R1=Image1(:,:,<span class="number">1</span>); G1=Image1(:,:,<span class="number">2</span>); B1=Image1(:,:,<span class="number">3</span>);</span><br><span class="line">R2=Image2(:,:,<span class="number">1</span>); G2=Image2(:,:,<span class="number">2</span>); B2=Image2(:,:,<span class="number">3</span>);</span><br><span class="line">[height,width,color]=<span class="built_in">size</span>(Image1);</span><br><span class="line"><span class="comment">% difference value line by line</span></span><br><span class="line">line_diff=<span class="built_in">zeros</span>(height,<span class="number">1</span>);</span><br><span class="line"><span class="keyword">for</span> <span class="built_in">i</span>=<span class="number">1</span>:height <span class="comment">% lia=ismember(R1,R2,'rows');</span></span><br><span class="line">    <span class="comment">%line_diff[i,1]</span></span><br><span class="line">    <span class="keyword">for</span> <span class="built_in">j</span>=<span class="number">1</span>:width</span><br><span class="line">        line_diff(<span class="built_in">i</span>,<span class="number">1</span>)=line_diff(<span class="built_in">i</span>,<span class="number">1</span>)+<span class="built_in">abs</span>(R1(<span class="built_in">i</span>,<span class="built_in">j</span>)-R2(<span class="built_in">i</span>,<span class="built_in">j</span>));</span><br><span class="line">        line_diff(<span class="built_in">i</span>,<span class="number">1</span>)=line_diff(<span class="built_in">i</span>,<span class="number">1</span>)+<span class="built_in">abs</span>(G1(<span class="built_in">i</span>,<span class="built_in">j</span>)-G2(<span class="built_in">i</span>,<span class="built_in">j</span>));</span><br><span class="line">        line_diff(<span class="built_in">i</span>,<span class="number">1</span>)=line_diff(<span class="built_in">i</span>,<span class="number">1</span>)+<span class="built_in">abs</span>(B1(<span class="built_in">i</span>,<span class="built_in">j</span>)-B2(<span class="built_in">i</span>,<span class="built_in">j</span>));</span><br><span class="line">    <span class="keyword">end</span></span><br><span class="line"><span class="keyword">end</span></span><br><span class="line"><span class="comment">% draw line_diff</span></span><br><span class="line"><span class="built_in">figure</span>;</span><br><span class="line"><span class="built_in">plot</span>(line_diff);</span><br><span class="line">title(<span class="string">'Each Line Difference'</span>);</span><br><span class="line"><span class="comment">% get indexs of area of content start and end</span></span><br><span class="line">content_linenumber_start=<span class="number">1</span>; content_linenumber_end=height;</span><br><span class="line"><span class="keyword">for</span> <span class="built_in">i</span>=<span class="number">1</span>:height</span><br><span class="line">    <span class="keyword">if</span> line_diff(<span class="built_in">i</span>)&lt;=<span class="number">0</span> <span class="comment">% threshold</span></span><br><span class="line">        content_linenumber_start=content_linenumber_start+<span class="number">1</span>;</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">        <span class="keyword">break</span>;</span><br><span class="line">    <span class="keyword">end</span></span><br><span class="line"><span class="keyword">end</span></span><br><span class="line"><span class="keyword">for</span> <span class="built_in">i</span>=height:<span class="number">-1</span>:<span class="number">1</span></span><br><span class="line">    <span class="keyword">if</span> line_diff(<span class="built_in">i</span>)&lt;=<span class="number">0</span> <span class="comment">% threshold</span></span><br><span class="line">        content_linenumber_end=content_linenumber_end<span class="number">-1</span>;</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">        <span class="keyword">break</span>;</span><br><span class="line">    <span class="keyword">end</span></span><br><span class="line"><span class="keyword">end</span></span><br><span class="line"><span class="built_in">figure</span>;</span><br><span class="line">subplot(<span class="number">1</span>,<span class="number">3</span>,<span class="number">1</span>),</span><br><span class="line">imshow(Image1(content_linenumber_start:content_linenumber_end,:,:));</span><br><span class="line">title(<span class="string">'Content Area 1'</span>);</span><br><span class="line">subplot(<span class="number">1</span>,<span class="number">3</span>,<span class="number">2</span>),</span><br><span class="line">imshow(Image2(content_linenumber_start:content_linenumber_end,:,:));</span><br><span class="line">title(<span class="string">'Content Area 2'</span>);</span><br><span class="line">subplot(<span class="number">1</span>,<span class="number">3</span>,<span class="number">3</span>),</span><br><span class="line">imshow(Image3(content_linenumber_start:content_linenumber_end,:,:));</span><br><span class="line">title(<span class="string">'Content Area 3'</span>);</span><br><span class="line"><span class="comment">% get indexs of repeated content start and end</span></span><br><span class="line">image_1_end=<span class="number">0</span>;image_2_start=<span class="number">0</span>; <span class="comment">% sencond value useless</span></span><br><span class="line"><span class="comment">% [bool_line_exist_r,int_line_number_r]=ismember(Image1(content_linenumber_start:content_linenumber_end,:,1),Image2(content_linenumber_start:content_linenumber_end,:,1),'rows');</span></span><br><span class="line"><span class="comment">% [bool_line_exist_g,int_line_number_g]=ismember(Image1(content_linenumber_start:content_linenumber_end,:,2),Image2(content_linenumber_start:content_linenumber_end,:,2),'rows');</span></span><br><span class="line"><span class="comment">% [bool_line_exist_b,int_line_number_b]=ismember(Image1(content_linenumber_start:content_linenumber_end,:,3),Image2(content_linenumber_start:content_linenumber_end,:,3),'rows');</span></span><br><span class="line">bool_line_match_r=<span class="built_in">false</span>(height,<span class="number">1</span>); bool_line_match_g=<span class="built_in">false</span>(height,<span class="number">1</span>); bool_line_match_b=<span class="built_in">false</span>(height,<span class="number">1</span>);</span><br><span class="line">int_line_match_r=<span class="built_in">zeros</span>(height,<span class="number">1</span>); int_line_match_g=<span class="built_in">zeros</span>(height,<span class="number">1</span>); int_line_match_b=<span class="built_in">zeros</span>(height,<span class="number">1</span>);</span><br><span class="line">bool_line_match=<span class="built_in">false</span>(height,<span class="number">1</span>);</span><br><span class="line">int_line_match=<span class="built_in">zeros</span>(height,<span class="number">1</span>);</span><br><span class="line"><span class="keyword">for</span> <span class="built_in">i</span>=<span class="number">1</span>:<span class="number">1</span>:height <span class="comment">% for each line in Iamge1</span></span><br><span class="line">    <span class="keyword">for</span> <span class="built_in">j</span>=<span class="number">1</span>:<span class="number">1</span>:height <span class="comment">% for each line in Image2</span></span><br><span class="line">        <span class="keyword">if</span> sum(<span class="built_in">abs</span>(R1(<span class="built_in">i</span>,:)-R2(<span class="built_in">j</span>,:)))&lt;<span class="number">30</span> <span class="comment">% threshold</span></span><br><span class="line">            bool_line_match(<span class="built_in">i</span>,<span class="number">1</span>)=<span class="built_in">true</span>;</span><br><span class="line">            int_line_match=<span class="built_in">j</span>;</span><br><span class="line">        <span class="keyword">end</span></span><br><span class="line">    <span class="keyword">end</span></span><br><span class="line"><span class="keyword">end</span></span><br><span class="line"><span class="built_in">figure</span>;</span><br><span class="line"><span class="built_in">plot</span>(bool_line_match);</span><br><span class="line">title(<span class="string">'Line match result'</span>);</span><br><span class="line"><span class="keyword">for</span> <span class="built_in">i</span>=content_linenumber_end:<span class="number">-1</span>:content_linenumber_start</span><br><span class="line">    <span class="keyword">if</span> bool_line_match(<span class="built_in">i</span>)==<span class="number">0</span></span><br><span class="line">        image_1_end=<span class="built_in">i</span>;</span><br><span class="line">        <span class="keyword">break</span>;</span><br><span class="line">    <span class="keyword">end</span></span><br><span class="line"><span class="keyword">end</span></span><br><span class="line"><span class="comment">% Junction</span></span><br><span class="line">Image12=[Image1(content_linenumber_start:image_1_end,:,:);Image2(content_linenumber_start:content_linenumber_end,:,:)];</span><br><span class="line"><span class="built_in">figure</span>;</span><br><span class="line">imshow(Image12);</span><br><span class="line">title(<span class="string">'Image 1&amp;2 Junction Result'</span>);</span><br><span class="line">imwrite(Image12,<span class="string">'S12.bmp'</span>,<span class="string">'bmp'</span>);</span><br><span class="line">Image123=[Image1(content_linenumber_start:image_1_end,:,:);Image2(content_linenumber_start:image_1_end,:,:);Image3(content_linenumber_start:content_linenumber_end,:,:)];</span><br><span class="line"><span class="built_in">figure</span>;</span><br><span class="line">imshow(Image123);</span><br><span class="line">title(<span class="string">'Image 1&amp;2&amp;3 Junction Result'</span>);</span><br><span class="line">imwrite(Image123,<span class="string">'S123.bmp'</span>,<span class="string">'bmp'</span>);</span><br></pre></td></tr></table></figure>
+<p>首先读取图像、分别提取RGB通道到R1 R2 G1 G2 B1 B2矩阵，对每行求差，结果存储在line_diff中，line_diff被图像化是这样的：</p>
+<p><img src="https://ws3.sinaimg.cn/large/006tNbRwgy1fxpxf978nnj30fm0e3t9f.jpg" alt=""></p>
+<p>注意到开头和结尾处、纵坐标为0的那两段了吗？这就是之前所说的，IE标题栏、导航栏、网页Header bar、底部状态栏，把这两段的行号保存下来，我们就可以提取到截图中的主要内容了。</p>
+<p><img src="https://ws2.sinaimg.cn/large/006tNbRwgy1fxpxfcongaj31550bv7bi.jpg" alt=""></p>
+<p>然后逐行扫描，得到第一张图里的每一行，在第二张图中是否存在内容一致的行，以及对应的行号。其中表示是否存在的布尔值，绘制成图表是这样子的：</p>
+<p><img src="https://ws2.sinaimg.cn/large/006tNbRwgy1fxpxffavuqj30fm0e3gm2.jpg" alt=""></p>
+<p>注意到尾部连续的纵坐标为1的那段儿了吗？其中后半部分是刚才检测到的底部状态栏——他们在两张图中也是完全一致的，前半部分就是两张图衔接区域了。将其对应的行号保存下来，直接完成图像拼接。</p>
+<p><img src="https://ws4.sinaimg.cn/large/006tNbRwgy1fxpxfhckd8j30eu0swtga.jpg" alt=""></p>
+<p>大功告成，接下来做性能分析：</p>
+<p>对于一般网页，不需要分别处理RGB三个色彩通道，在进行处理之前，首先将其<strong>转换成灰度图像</strong>是比较明智的做法。在使用C++实现时可以采用这一点。另外，由于是逐行扫描，需要花费O(n)的时间，如果对两张图做交叉扫描，就需要O(n^2)的时间了，显然不合适。考虑到交叉扫描后最终提取到的衔接区域很小，可以调整循环的步长，在循环结束后在对衔接点附近的行进行精确扫描，可以大大降低在逐行扫描中浪费的时间。</p>
+<p>鉴于这次程序设计只是使用Matlab做出原型，对源图片有一定的要求：</p>
+<ul>
+<li>图像不允许进行有损压缩，不然难以判别图像矩阵是否相等</li>
+<li>要求内容区域以外的地方不可产生变化，比如标题栏如果在截图过程中不断变色，就会误检成内容区域</li>
+</ul>
+<p>对于后者，可以判别两行矩阵是否一致时，允许在阈值范围内波动，均算作一致。阈值不建议设置过大，否则会干扰识别过程。</p>
+<p>最终成功验证了文章开头提出的长图拼接方案，后续使用C++重写就能做出一个实用的滚动截图工具了。使用图像检测的方法，其优势在于图片的衔接处会比较完美，难以看出差别。如果采用事先算出滚动的像素数、然后进行拼接的方法，如有干扰，或者在根据字号计算行高时四舍五入了半个像素，乘以行数，就会产生几个像素的偏移，而这种偏移在滚动截图的结果中，会直接表现为一行文本的重合或残缺，这显然是不可接受的。</p>
+<p>最后提一下全景图片的拼接，这个对算法的鲁棒性要求更高，应该会直接在频域而不是时域上进行处理了，对专业素养要求也更高一些。</p>
+<p>好像没什么可说的了，那就结束吧：）</p>
+
+  </div>
+  <div class="post-footer">
+    
+      <ul class="post-tag-list"><li class="post-tag-list-item"><a class="post-tag-list-link" href="/tags/matlab/">matlab</a></li><li class="post-tag-list-item"><a class="post-tag-list-link" href="/tags/截图/">截图</a></li><li class="post-tag-list-item"><a class="post-tag-list-link" href="/tags/特征/">特征</a></li></ul>
+    
+
+    <a href="#top" class="top">Back to Top</a>
+  </div>
+</article>
+<footer>
+  &copy; 2018
+  <span class="author">
+    二葱
+  </span>
+</footer>
+
+<script src="https://unpkg.com/mermaid@7.1.2/dist/mermaid.min.js"></script>
+<script>
+  if (window.mermaid) {
+    mermaid.initialize({theme: 'forest'});
+  }
+</script>
+
+    </div>
+  </body>
+</html>

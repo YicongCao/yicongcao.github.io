@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+  <!DOCTYPE html>
+<html lang="en">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1">
+  
+  <title>从心开始：Win 10 开始菜单项目总结 - 二葱写字的地方</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+  
+  <meta name="keywords" content="win10,开始菜单">
+  
+  
+    <link rel="shortcut icon" type="image/x-icon" href="/images/favicon.png?v=1.02">
+  
+  
+    <link rel="alternate" href="/atom.xml " title="二葱写字的地方" type="application/atom+xml">
+  
+
+  <link rel="stylesheet" href="/css/style.css">
+</head></html>
+  <body>
+    <div class="container">
+      <header class="header">
+  <div class="blog-title">
+    <a href="/" class="logo">二葱写字的地方</a>
+    <div class="subtitle"></div>
+  </div>
+  <nav class="navbar">
+    <ul class="menu">
+      
+        <li class="menu-item">
+          <a href="/" class="menu-item-link">Home</a>
+        </li>
+      
+        <li class="menu-item">
+          <a href="/archives" class="menu-item-link">Archives</a>
+        </li>
+      
+        <li class="menu-item">
+          <a href="/about" class="menu-item-link">About</a>
+        </li>
+      
+    </ul>
+  </nav>
+</header>
+<article class="post">
+  <div class="post-title">
+    <h1 class="article-title">从心开始：Win 10 开始菜单项目总结</h1>
+  </div>
+   <div class="post-meta">
+    <span class="post-time">2017-03-31</span>
+  </div>
+  <div class="post-content">
+    <blockquote>
+<p>由于微软激进的升级策略和新预装PC的销售，Win 10 的用户量变得越来越不可忽视。随着 Win 10 逐渐自上而下渗透到小白用户，用户习惯被打乱给我们团队带来了一些机会。首当其冲的开始菜单，被微软改的面目全非，于是我们就从开始菜单下手，尝试优化用户使用 Win 10 系统破碎的体验……</p>
+</blockquote>
+<p><img src="https://ws3.sinaimg.cn/large/006tNbRwgy1fxpxvl1st3g312p0obhdt.gif" alt=""></p>
+<h2 id="一、界面设计"><a href="#一、界面设计" class="headerlink" title="一、界面设计"></a>一、界面设计</h2><h3 id="做法"><a href="#做法" class="headerlink" title="做法"></a>做法</h3><p>1、我们采用了 ATL 设计界面，图中每个控件都是一个子窗口，通过继承CWindowImpl获得窗口函数、样式等，通过DECLARE_WND_CLASS、BEGIN_MSG_MAP等宏定义来简化窗口类、窗口函数的编码；</p>
+<p>2、采用GDI/GDI++进行自绘</p>
+<h3 id="缺点："><a href="#缺点：" class="headerlink" title="缺点："></a>缺点：</h3><p>1、GDI++绘图速度较慢，所以只在绘制特定格式的图片资源、和绘制文字时使用GDI++；</p>
+<p>2、由于整个开始菜单窗口的结构为一层层的父窗口嵌套子窗口，导致难以在一次WM_PAINT消息分发中完成所有控件的绘制。这就导致了随机区域的<strong>闪烁</strong>问题。</p>
+<h3 id="改进"><a href="#改进" class="headerlink" title="改进"></a>改进</h3><p>1、业界通用做法，使用双缓冲技术，先绘制到内存DC，绘制操作全部完成后然后再将其BitBlt到硬件DC上；</p>
+<p>2、将不必要的重绘降到最低，用空间换时间。每次绘制完成后，保留该内存DC，以“按钮”控件为例，如果其文本没有改变、鼠标的hover状态也没有改变，此时如果收到WM_PAINT消息，将直接把上次绘制好的内存DC给BitBlt到硬件DC上，结束OnPaint流程。</p>
+<p>通过双缓冲、“懒”渲染的方式，尽可能将子窗口绘制潜在闪烁问题的影响降到最低。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">bool</span> bHoldLast = !(!m_hMemDCCache);</span><br><span class="line"><span class="keyword">if</span> (!m_hMemDCCache)</span><br><span class="line">&#123;</span><br><span class="line">	m_hMemDCCache = CreateCompatibleDC(hdc);</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">if</span> (!m_hBmpBknd)</span><br><span class="line">&#123;</span><br><span class="line">	m_hBmpBknd = CreateCompatibleBitmap(hdc, rtClient.Width(), rtClient.Height());</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">if</span> (m_bLazyRender)</span><br><span class="line">&#123;</span><br><span class="line">	<span class="keyword">if</span> (m_bLastHover == m_bHover &amp;&amp; m_LastText == m_text &amp;&amp; bHoldLast)</span><br><span class="line">	&#123;</span><br><span class="line">		BitBlt(hdc, rtClient.left, rtClient.top, rtClient.right, rtClient.bottom, m_hMemDCCache, <span class="number">0</span>, <span class="number">0</span>, SRCCOPY);</span><br><span class="line">		<span class="keyword">if</span> (uMsg!=WM_PRINTCLIENT)</span><br><span class="line">			EndPaint(&amp;ps);</span><br><span class="line">		<span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">else</span></span><br><span class="line">	&#123;</span><br><span class="line">		bHoldLast = <span class="literal">false</span>;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="二、AERO"><a href="#二、AERO" class="headerlink" title="二、AERO"></a>二、AERO</h2><h3 id="做法-1"><a href="#做法-1" class="headerlink" title="做法"></a>做法</h3><p>1、Win 8 以来微软虽然移除了AERO毛玻璃的功能，但Win 10 自己的开始菜单却拥有毛玻璃效果。如果你的机器足够慢，能够观察到Win 10开始菜单弹出的时候实际上是半透明而不是毛玻璃，在窗口弹出一段时间后背景才变成毛玻璃效果；</p>
+<p>2、经过查阅相关资料，微软在user32.dll中有一个未公开的API：SetWindowCompositionAttribute，将窗口句柄和混合策略传给它，能对任意窗口开启毛玻璃效果。</p>
+<h3 id="缺点"><a href="#缺点" class="headerlink" title="缺点"></a>缺点</h3><p>1、这个API虽然好用，但直接将窗口背景的渲染交给了系统完成。播放视频时，窗口背景会随下层视频内容的变化而变化，而毛玻璃效果不受影响。</p>
+<p>2、GDI提供的文字绘制、UXTheme提供的文字绘制均和这个API不兼容，绘制出来的文字自带白色背景无法消除。所以此时只能使用GDI++来进行文字绘制，而GDI++绘制的文字受毛玻璃效果影响，边缘模糊不清楚。</p>
+<h3 id="改进-1"><a href="#改进-1" class="headerlink" title="改进"></a>改进</h3><p>1、在尝试UXTheme、GDI自带的文字绘制无果后，转而采用GDI++绘制，并且设置文本Hint策略为TextRenderingHintAntiAlias。这样绘制出来的效果自带抗锯齿，但边缘扔有模糊问题。</p>
+<p>2、对字体进行描边绘制，绘制时分别上左、上右、下左、下右 1px的位置绘制灰色文本，最后在中央绘制白色文本，来达到描边的效果，增强文字的可读性。</p>
+<p>通过SetWindowCompositionAttribute这套API，为开始菜单打开了毛玻璃的效果。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">ACCENTPOLICY</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line">    <span class="keyword">int</span> nAccentState;</span><br><span class="line">    <span class="keyword">int</span> nFlags;</span><br><span class="line">    <span class="keyword">int</span> nColor;</span><br><span class="line">    <span class="keyword">int</span> nAnimationId;</span><br><span class="line">&#125;;</span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">WINCOMPATTRDATA</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line">    DWORD    attribute;</span><br><span class="line">    PVOID    pData;</span><br><span class="line">    ULONG    dataSize;</span><br><span class="line">&#125;;</span><br><span class="line"><span class="function"><span class="keyword">typedef</span> <span class="title">BOOL</span> <span class="params">(WINAPI *_SETWINDOWCOMPOSITIONATTRIBUTE)</span><span class="params">(HWND, WINCOMPATTRDATA*)</span></span>;</span><br><span class="line"></span><br><span class="line">_SETWINDOWCOMPOSITIONATTRIBUTE      m_SetWindowCompositionAttribute;</span><br><span class="line"> m_SetWindowCompositionAttribute = (_SETWINDOWCOMPOSITIONATTRIBUTE)GetProcAddress(GetModuleHandle(_T(<span class="string">"user32.dll"</span>)), <span class="string">"SetWindowCompositionAttribute"</span>);</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (m_SetWindowCompositionAttribute)</span><br><span class="line">&#123;</span><br><span class="line">      ACCENTPOLICY policy = &#123; <span class="number">3</span>, <span class="number">0x13</span>, color, <span class="number">0</span> &#125;;</span><br><span class="line">      WINCOMPATTRDATA data = &#123; <span class="number">19</span>, &amp;policy, <span class="keyword">sizeof</span>(ACCENTPOLICY) &#125;;</span><br><span class="line">      m_SetWindowCompositionAttribute(m_hWnd, &amp;data);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="三、适配高DPI"><a href="#三、适配高DPI" class="headerlink" title="三、适配高DPI"></a>三、适配高DPI</h2><h3 id="做法-2"><a href="#做法-2" class="headerlink" title="做法"></a>做法</h3><p>1、我们设计了一个全局单例类来管理高DPI的所有行为，以前的代码不需要计算DPI实际值是多少、不需要关心高DPI的问题，只需要将以前hard code的宽高值交给该单例类进行一次缩放处理即可。</p>
+<p>2、系统对不感知高DPI的程序，会直接将其界面模糊放大2倍处理。要想向系统声明自己支持高DPI，有两种方法：①直接在manifest中声明；②在进程中调用SetProcessDpiAware或者在线程中调用GetThreadDpiAwarenessContext，这两个函数分别位于User32.DLL和Shcore.DLL中。</p>
+<h3 id="缺点-1"><a href="#缺点-1" class="headerlink" title="缺点"></a>缺点</h3><p>1、窗口尺寸、按钮大小、控件位置都能很好地适应高DPI，在高DPI的显示器上，主界面放大而不模糊，兼顾了美观和易读性。</p>
+<p>2、图片资源难以通过直接缩放的方式支持高DPI，直接缩放会造成模糊、不缩放就显得特别小。传统显示器为96dpi，而高DPI的显示器有120、150、200等各种dpi设置。如果为每种缩放比例都配置切图的话，是一个不折不扣的灾难。而直接上200%缩放的切图然后向下缩放，既造成了资源浪费，而且面临300%的缩放比例仍然没有办法，会造成模糊——总会存在一个值卡住你。</p>
+<h3 id="改进-2"><a href="#改进-2" class="headerlink" title="改进"></a>改进</h3><p>1、变像素图为矢量图，GDI++原生支持emf格式的矢量图绘制。然而在具体实施的过程中我们还发现，对于小尺寸的切图，矢量图的效果比不上像素图。原因是像素图在图像边缘部分会有抗锯齿处理，放大之后能发现不是非黑即白、而是有灰度过渡处理的。而矢量图不存在抗锯齿处理，所以向下缩放的时候，仍然需要采用像素图。</p>
+<p>2、尝试使用字体图标。由于字体的渲染自带抗锯齿效果，与其苦苦研究emf图片的抗锯齿渲染算法，不如直接将切图变成字体、然后使用字体渲染来获得抗锯齿的加成。这也是Win 10系统自己采用的策略，所有UWP应用均采用了名为“<strong>Segoe MDL2 Assets</strong>”的字体。其中包含大量的抽象图标，直接复制Unicode码到代码中，载入这款字体、绘制该字符串，直接根据显示器的DPI指定字体大小，即可实现根据各种不同DPI无损缩放Icon的效果。</p>
+<p>四个与高DPI支持相关的函数原型：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">typedef</span> <span class="title">HRESULT</span> <span class="params">(WINAPI *PFN_GetDpiForMonitor)</span> <span class="params">( HMONITOR hmonitor, MONITOR_DPI_TYPE dpiType, UINT *dpiX, UINT *dpiY)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">typedef</span> <span class="title">HRESULT</span> <span class="params">(WINAPI *PFN_SetProcessDpiAwareness)</span> <span class="params">( PROCESS_DPI_AWARENESS value)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">typedef</span> <span class="title">DPI_AWARENESS_CONTEXT</span> <span class="params">(WINAPI *PFN_SetThreadDpiAwarenessContext)</span> <span class="params">(DPI_AWARENESS_CONTEXT dpiContext)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">typedef</span> <span class="title">DPI_AWARENESS_CONTEXT</span> <span class="params">(WINAPI *PFN_GetThreadDpiAwarenessContext)</span> <span class="params">(<span class="keyword">void</span>)</span></span>;</span><br></pre></td></tr></table></figure>
+<p>Font Icon 字体：</p>
+<p><img src="https://ws2.sinaimg.cn/large/006tNbRwgy1fxpxx7dfhfj312u0og427.jpg" alt=""></p>
+<p>应用FontIcon 和 对高DPI支持的效果：</p>
+<p><img src="https://ws4.sinaimg.cn/large/006tNbRwgy1fxpxx9g53aj312u0ogtp5.jpg" alt=""></p>
+<h2 id="四、锁定程序"><a href="#四、锁定程序" class="headerlink" title="四、锁定程序"></a>四、锁定程序</h2><h3 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h3><p>1、我们知道，Win 7 以来我们可以将程序固定到两个常用位置：任务栏和开始菜单。</p>
+<p>2、Win 7 系统上存储固定软件列表的位置在：%APPDATA%\Roaming\Microsoft\Internet Explorer\Quick Launch\User Pinned\StartMenu这里。所有软件以快捷方式存储在这个目录下。</p>
+<p>3、Win 10 系统引入动态磁贴的概念，磁贴包含UWP应用的入口、UWP动态创建的Secondary Tile、和传统的 Win 32 磁贴。由于磁贴布局、尺寸的多变，我们无法像以前那样直接获取固定到开始屏幕的程序了。</p>
+<h3 id="预研"><a href="#预研" class="headerlink" title="预研"></a>预研</h3><p>1、楼主是powershell爱好者，从Win 10 Build 9xxx加入insider一路升级过来，踩过很多Win 10的坑。Win 10 早期出现过很多开始菜单布局丢失、开始菜单无法弹出的Bug，所以微软为用户准备了一个命令行，可以一键导出开始菜单布局。</p>
+<p>2、Export-StartLayout命令可以直接将开始菜单的布局以XML的形式导出到指定目录下。我们通过解析这个XML，可以获取固定到开始屏幕上的Win32程序。如果需要进行相应修改，还可以调整这个XML，然后再导入到系统。</p>
+<p>3、powershell命令集在64位系统上无法直接通过ShellExcute的方式调用，所以需要研究一下Export-StartLayout这个命令究竟执行了哪些操作。powershell命令集均为.NET实现，很合楼主的口味 O(∩_∩)O~</p>
+<p>以下是楼主以微薄的知识尝试逆向系统功能的过程，绕了些弯路，还请各位大神轻拍：</p>
+<p>要逆向的powershell指令如下：</p>
+<p><img src="https://ws2.sinaimg.cn/large/006tNbRwgy1fxpxxrygqij30rb0hojsy.jpg" alt=""></p>
+<p>被导出的开始屏幕布局文件如下：</p>
+<p><img src="https://ws4.sinaimg.cn/large/006tNbRwgy1fxpxxutp7cj317n0p8dk4.jpg" alt=""></p>
+<p>首先使用process monitor记录一下，执行export-startlayout命令之后都发生了些什么，然后尝试定位到创建.\layout.xml文件的CreateFile操作这里：</p>
+<p><img src="https://ws2.sinaimg.cn/large/006tNbRwgy1fxpxxwo72dj31bo0oon3m.jpg" alt=""></p>
+<p>.NET 库命名DLL的方式特征很明显，如下这个DLL很可能就是powershell命令集对应的DLL：</p>
+<p><img src="https://ws4.sinaimg.cn/large/006tNbRwgy1fxpxxy1hhwj30bp0i3jro.jpg" alt=""></p>
+<p>使用IL SPY分析这个DLL，可以确定刚才的猜想，这个DLL提供了Export-Startlayout这条命令的实现。从PSCmdLet类继承下来，verb和noun分别就是我们用到的Export和StartLayout，其中ProcessRecord方法会解析命令参数并构建COM对象：</p>
+<p><img src="https://ws1.sinaimg.cn/large/006tNbRwgy1fxpxxzgh0zj310r0oq77o.jpg" alt=""></p>
+<p>在红框标注出来的位置上，是一个CLSID。很明显这段.NET代码只是一个入口，真正的实现在这个CLSID指向的一个COM组件里。</p>
+<p>继续看一下这个DLL的命名空间，就发现了这个接口：</p>
+<p><img src="https://ws1.sinaimg.cn/large/006tNbRwgy1fxpxy1i1l0j30ml0em768.jpg" alt=""></p>
+<p><img src="https://ws1.sinaimg.cn/large/006tNbRwgy1fxpxy37extj30w50ekwgm.jpg" alt=""></p>
+<p>其实看到这里，秘密基本上已经揭开了，直接拿着这个CLSID去注册表里看一下，果然对应上了：</p>
+<p><img src="https://ws1.sinaimg.cn/large/006tNbRwgy1fxpxy53x8fj30bp0i30sz.jpg" alt=""></p>
+<p>这个DLL在刚才用Process Monitor抓取的日志中也出现，是被Microsoft.Windows.StartLayout.Commands.dll加载进来的。那么基本可以确定是这个DLL完成了真正的导出任务。而我们所需要的CLSID和接口定义，已经可以直接从IL SPY的分析结果中抠出来了。</p>
+<p><img src="https://ws2.sinaimg.cn/large/006tNbRwgy1fxpxy6k4cvj30lw0830t1.jpg" alt=""></p>
+<p>先在自己的DEMO中定义一下接口，然后小试牛刀：</p>
+<p><img src="https://ws3.sinaimg.cn/large/006tNbRwgy1fxpxy8ishnj30ku0od3zl.jpg" alt=""></p>
+<p>成功完成了导出任务。</p>
+<p>剩下的工作，就是用rapidxml工具去解析这个XML树，拿到我们需要的Win32程序的磁贴数据了。</p>
+<p>这个数据不仅包含固定到开始屏幕的Win32程序列表，还包括这些磁贴的顺序、大小、位置，如果以后产品策略有相关的个性化调整，还能利用上这些丰富的信息，做出贴合Win10原生逻辑的设计。</p>
+<p>注意rapidxml里有个坑就是，它获得的char*是忽略文件编码的。上述方法导出的是UTF-8编码的文本，所以需要根据编码格式做一次MultiByteToWideChar转换，参数为CP_UTF8。</p>
+<p><img src="https://ws1.sinaimg.cn/large/006tNbRwgy1fxpxyawjl2j312u0og4cn.jpg" alt=""></p>
+<h2 id="五、定时关机"><a href="#五、定时关机" class="headerlink" title="五、定时关机"></a>五、定时关机</h2><h3 id="做法-3"><a href="#做法-3" class="headerlink" title="做法"></a>做法</h3><p>1、在开始菜单的电源菜单中，除了普通的关机、睡眠、重启，还有一项就是定时关机，用户能够设定一个三天内的关机时间，接近时给用户一个视觉提示，并在触达该时间时执行关机操作。</p>
+<p>2、将定时关机的功能做到了一个隐形的子窗口中，使用Timer计时，其他的有关定时关机的设置窗口通过给它发送消息，来控制定时关机的取消、暂停和继续。在设置好时间、开始计时后，这个窗口不在隐形，而是在开始菜单的右下角显示一个倒数窗。</p>
+<h3 id="缺点-2"><a href="#缺点-2" class="headerlink" title="缺点"></a>缺点</h3><p>定时关机的功能运行在UI线程上，将逻辑做到UI上，会导致定时关机的功能无法独立出来。</p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>更好的做法是新建一个线程，运行一个消息循环。与定时关机取消、暂停、继续、读写注册表等操作均在这个线程完成。</p>
+<p>用户在界面上产生操作后，发消息给它。而不是将一个包含UI逻辑的子窗口，作为定时关机逻辑的控制中心。</p>
+<p><img src="http://km.oa.com/files/photos/pictures/201703/1490962457_82_w473_h257.png" alt=""></p>
+<h2 id="六、Shell扩展"><a href="#六、Shell扩展" class="headerlink" title="六、Shell扩展"></a>六、Shell扩展</h2><h3 id="背景-1"><a href="#背景-1" class="headerlink" title="背景"></a>背景</h3><p>我们的开始菜单需要以高优先级的方式启动，完成注入并替换掉Win10自带的开始菜单。</p>
+<p>但依然有些场景下会导致替换失效，比如作为启动项之一，如果我们启动时explorer.exe还没有启动起来，会导致替换失败；而explorer.exe如果意外重启了，我们也不能收到通知，完成二次注入。</p>
+<h3 id="总结-1"><a href="#总结-1" class="headerlink" title="总结"></a>总结</h3><p>有两种方式解决这个问题，①持续监控explorer.exe进程的启动行为，一旦有新创建的explorer.exe，我们就启动并注入；②让explorer.exe主动加载我们，而不是我们一直在后台监控explorer。</p>
+<p>第二种方式，实际上就是Shell扩展。我们实现了两种Shell扩展的接口：右键菜单扩展、和图标扩展。这两种扩展可以在explorer拉起时自动加载，也就实现了即便explorer意外重启，我们也能够随时保持经典开始菜单替换的有效性。</p>
+<p>如下为我们的Shell扩展实现的接口：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">BEGIN_COM_MAP(CCQMStartShellExtension)</span><br><span class="line">	COM_INTERFACE_ENTRY(ICQMStartShellExtension)</span><br><span class="line">	COM_INTERFACE_ENTRY(IDispatch)</span><br><span class="line">	COM_INTERFACE_ENTRY_IID(IID_IShellExtInit,  IShellExtInit)</span><br><span class="line">	COM_INTERFACE_ENTRY_IID(IID_IContextMenu,   IContextMenu)</span><br><span class="line">	COM_INTERFACE_ENTRY_IID(IID_IContextMenu2,  IContextMenu2)</span><br><span class="line">	COM_INTERFACE_ENTRY_IID(IID_IContextMenu3,  IContextMenu3)</span><br><span class="line">	COM_INTERFACE_ENTRY(IShellIconOverlayIdentifier)</span><br><span class="line">END_COM_MAP()</span><br></pre></td></tr></table></figure>
+<p>另外还发现使用rgs文件以声明式的语法，来告诉系统你要注册到哪里、CLSID和IID都是啥。还能指定是否在卸载你的Shell扩展时一并抹掉。以前都是手动写注册表的，使用rgs还是很方便的。</p>
+<p>此外，在最近的工作中，把开始菜单剥离出来，作为独立包安装和卸载。也会上架软件管理，以全新的姿态迎接<strong>Win 10创造者更新</strong>，blah blah blah ~</p>
+<p>以上。</p>
+
+  </div>
+  <div class="post-footer">
+    
+      <ul class="post-tag-list"><li class="post-tag-list-item"><a class="post-tag-list-link" href="/tags/win10/">win10</a></li><li class="post-tag-list-item"><a class="post-tag-list-link" href="/tags/开始菜单/">开始菜单</a></li></ul>
+    
+
+    <a href="#top" class="top">Back to Top</a>
+  </div>
+</article>
+<footer>
+  &copy; 2018
+  <span class="author">
+    二葱
+  </span>
+</footer>
+
+<script src="https://unpkg.com/mermaid@7.1.2/dist/mermaid.min.js"></script>
+<script>
+  if (window.mermaid) {
+    mermaid.initialize({theme: 'forest'});
+  }
+</script>
+
+    </div>
+  </body>
+</html>

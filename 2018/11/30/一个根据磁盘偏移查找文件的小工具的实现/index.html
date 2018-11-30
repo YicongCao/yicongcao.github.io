@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+  <!DOCTYPE html>
+<html lang="en">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1">
+  
+  <title>一个根据磁盘偏移查找文件的小工具的实现 - 二葱写字的地方</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+  
+  <meta name="keywords" content="ntfs,搜索文件,lba">
+  
+  
+    <link rel="shortcut icon" type="image/x-icon" href="/images/favicon.png?v=1.02">
+  
+  
+    <link rel="alternate" href="/atom.xml " title="二葱写字的地方" type="application/atom+xml">
+  
+
+  <link rel="stylesheet" href="/css/style.css">
+</head></html>
+  <body>
+    <div class="container">
+      <header class="header">
+  <div class="blog-title">
+    <a href="/" class="logo">二葱写字的地方</a>
+    <div class="subtitle"></div>
+  </div>
+  <nav class="navbar">
+    <ul class="menu">
+      
+        <li class="menu-item">
+          <a href="/" class="menu-item-link">Home</a>
+        </li>
+      
+        <li class="menu-item">
+          <a href="/archives" class="menu-item-link">Archives</a>
+        </li>
+      
+        <li class="menu-item">
+          <a href="/about" class="menu-item-link">About</a>
+        </li>
+      
+    </ul>
+  </nav>
+</header>
+<article class="post">
+  <div class="post-title">
+    <h1 class="article-title">一个根据磁盘偏移查找文件的小工具的实现</h1>
+  </div>
+   <div class="post-meta">
+    <span class="post-time">2018-11-30</span>
+  </div>
+  <div class="post-content">
+    <p><img src="https://ws3.sinaimg.cn/large/006tNbRwgy1fxpxhgti3oj30ik0cfgm7.jpg" alt=""></p>
+<h2 id="写在前面"><a href="#写在前面" class="headerlink" title="写在前面"></a>写在前面</h2><p>一个设计良好的组件总是让人忘了它的存在。文件系统就是这样，由于其设计精良、运行高效，让我们在日常的复制、粘贴、格式化中都感觉不到它的存在。但作为技术人员我们有必要了解背后的基本原理，这是我的导师给我的第一个题目，也是我用C++写的第一个小工具：根据磁盘偏移量（LBA地址）定位文件、根据输入的文件路径确定物理偏移量。工具制作完成，正好整理总结一下制作过程，发出来跟大家分享。</p>
+<h2 id="原理分析"><a href="#原理分析" class="headerlink" title="原理分析"></a>原理分析</h2><p>传统的硬盘是在盘片上存储文件的，硬件上采用C（柱面）H（磁头）S（扇区）的方式进行寻址，在硬盘容量一再扩增、CHS方式不足以寻址全部扇区时提出了LBA（逻辑区块地址）寻址的方式，LBA地址与PBA（物理区块地址）一一对应，通过基于首地址的偏移量可以直接读取某一物理位置上的扇区内容；虽然固态硬盘的存储原理与机械硬盘大不相同，也已经没有了盘片和磁头的概念，但仍然支持通过LBA地址访问扇区，通过FTL（闪存转换层）将LBA地址转换成物理上的PBA地址，并维护一份LBA和PBA的映射表。但两种硬盘都可以通过LBA地址访问硬盘中每一个有效扇区。</p>
+<p><img src="https://ws3.sinaimg.cn/large/006tNbRwgy1fxpxhjbmmhj30bu02fmx0.jpg" alt=""></p>
+<p>要想实现根据LBA地址定位文件，需要知道两个东西：</p>
+<ul>
+<li>硬盘是如何索引分区的</li>
+<li>文件系统是如何索引文件的</li>
+</ul>
+<p>第一点，我们大多数电脑采用DOS分区体系，即使用MBR（主引导记录）来记录硬盘上的分区信息，并完成计算机通电自检后的第一步引导任务，部分新电脑已经支持EFI引导+GPT分区体系，苹果电脑在此之前采用的是Apple分区体系。本次任务主要针对DOS分区体系。MBR位于硬盘的第一扇区，使用WinHex可以直接打开并查看这个扇区的内容：</p>
+<p><img src="https://ws3.sinaimg.cn/large/006tNbRwgy1fxpxhl6s8uj30hk0fltai.jpg" alt=""></p>
+<p>MBR的详细结构如下表：</p>
+<p><img src="https://ws1.sinaimg.cn/large/006tNbRwgy1fxpxhnd6ysj30a50950tn.jpg" alt=""></p>
+<p>可以看到，标准MBR的分区表可以描述四个分区，每项占据16字节，起始LBA地址总为0x1BE。每个分区项中的详细结构如下表：</p>
+<p><img src="https://ws1.sinaimg.cn/large/006tNbRwgy1fxpxhosn05j30c00arq4k.jpg" alt=""></p>
+<p>如此一来，我们有了每个主分区的起始LBA地址，接下来就要弄清楚分区上是如何组织文件的。根据已经得到的信息，我们使用WinHex定位到第一个分区的起始扇区：</p>
+<p><img src="https://ws4.sinaimg.cn/large/006tNbRwgy1fxpxhq6r1wj30hi0fkmyy.jpg" alt=""></p>
+<p>其中的关键信息如下图：</p>
+<p><img src="https://ws4.sinaimg.cn/large/006tNbRwgy1fxpxhs594kj30go0ijgm5.jpg" alt=""></p>
+<p>现在需要说明第二点，NTFS文件系统是如何索引分区上的文件的。</p>
+<p>文件系统使用簇（Cluster）来分配文件，而刚才我们是通过扇区（Sector）来完成MBR、PBR的定位的。簇的大小在格式化分区时可以手动指定，一般默认为8个扇区为1簇，由于每个扇区容量为512字节，则每簇实际大小为4KB。</p>
+<p>而NTFS又使用VCN（虚拟簇号）和LCN（逻辑簇号）来进行簇的定位，LCN是对整个卷中所有的簇从头到尾所进行的简单编号。卷因子乘以LCN，NTFS就能够得到卷上的物理字节偏移量，从而得到物理磁盘地址。VCN则是对属于特定文件的簇从头到尾进行编号，以便于引用文件中的数据。VCN可以映射成LCN，而不必要求在物理上连续。</p>
+<p><img src="https://ws2.sinaimg.cn/large/006tNbRwgy1fxpxhue6h0j30fb06374e.jpg" alt=""></p>
+<p>NTFS的目录只是一个简单的文件名和文件引用号的索引，如果目录的属性列表小于一个记录的长度，那么该目录的所有信息都存储在主文件表的记录中，对于大于记录的目录则使用B+树进行管理。</p>
+<p>主文件表中的基本文件记录中有一个指针指向一个存储非常驻索引缓冲--包括该目录下所有下一级子目录和文件的外部簇，而B+树结构便于大型目录中文件和子目录的快速查找。在NTFS中，所有存储在卷上的数据都包含在文件中，包括用来定位和获取文件的数据结构，引导程序和记录这个卷的记录（NTFS元数据）的位图（$BITMAP），这体现了NTFS的原则：<strong>磁盘上的任何事物都为文件</strong>。在文件中存储一切使得文件系统很容易定位和维护数据，而在NTFS中，卷中所有存放的数据均在一个叫做MFT的文件记录数组中，称为主文件表(Master File Table)，MFT是由高级格式化产生的。而MFT则由文件记录(File Record)数组构成。File Record的大小一般是固定的，不管簇的大小是多少，均为1KB，这个概念相当于Linux中的inode（i节点）。File Record在MFT文件记录数组中物理上是连续的，且从0开始编号。MFT仅供系统本身组织、架构文件系统使用，这在NTFS中称为元数据（metadata）。其中最基本的前16个记录是操作系统使用的非常重要的元数据文件。这些NTFS主文件表的重要的元数据文件都是以$开始的名字，所以是隐藏文件。实际上File System Driver(ntfs.sys)维护了一个系统变量NTFS Protect System Files用于隐藏这些元数据，但这并不妨碍我们基于LBA地址直接读取这些扇区上的字节内容。</p>
+<p>包括我们刚才看到的NTFS引导区、还有MFT表，都是以文件的形式存储在分区上的。而知道了第一个MFT项的地址，也就能索引所有的MFT项了。通过上图我们知道，这块分区的MFT表起始簇号为786,432。我们把786,432转换成LBA地址，然后打开这块扇区，可以看到如下内容：</p>
+<p><img src="https://ws3.sinaimg.cn/large/006tNbRwgy1fxpxhwe7d1j30hf0fjaba.jpg" alt=""></p>
+<p>那么MFT项中的信息是如何组织的呢？继续使用WinHex提供的模板来查看：</p>
+<p><img src="https://ws3.sinaimg.cn/large/006tNbRwgy1fxpxhybmssj30go0juwf5.jpg" alt=""></p>
+<p>一个MFT项包含MFT头、属性列表，属性列表中包含标准信息属性、文件名属性、数据属性、索引根属性等，上面我们提到过，小于1KB的文件，其内容会直接作为常驻属性存储在MFT项内以节省空间。属性列表由属性组成，每个属性又包含属性头和属性内容。常用的属性如下表：</p>
+<p><img src="https://ws4.sinaimg.cn/large/006tNbRwgy1fxpxi0m41gj30jm04ywf9.jpg" alt=""></p>
+<p>其中数据属性决定了这个MFT项所代表的文件在硬盘上的存储位置，同样的，根据各字节偏移处所代表的信息，可以将其解构出来：</p>
+<p><img src="https://ws4.sinaimg.cn/large/006tNbRwgy1fxpxi2c6etg30cm063q2v.gif" alt=""></p>
+<p>非常驻的数据属性描述了簇流列表（包含簇流长度和簇流起始位置）和起始与结束的VCN地址。根据这些信息，我们就能计算出每个MFT代表的文件在硬盘上对应的LBA地址和长度了。</p>
+<p>由于我们直接面对的是Raw Bytes，所以实际编程还需要查阅哪个字节处的数据代表什么意思。</p>
+<h2 id="编程实现"><a href="#编程实现" class="headerlink" title="编程实现"></a>编程实现</h2><p>实现这个程序主要需要以下几个Windows API：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">HANDLE WINAPI **CreateFile**(</span><br><span class="line"></span><br><span class="line">LPCTSTR lpFileName, <span class="comment">// 文件名</span></span><br><span class="line">DWORD dwDesiredAccess, <span class="comment">// 访问模式</span></span><br><span class="line">DWORD dwShareMode, <span class="comment">// 共享模式</span></span><br><span class="line">LPSECURITY\_ATTRIBUTES lpSecurityAttributes, <span class="comment">// 安全属性(也即销毁方式)</span></span><br><span class="line">DWORD dwCreationDisposition, <span class="comment">// 创建方式</span></span><br><span class="line">DWORD dwFlagsAndAttributes, <span class="comment">// 文件属性</span></span><br><span class="line">HANDLE hTemplateFile <span class="comment">// 模板文件句柄</span></span><br><span class="line">);</span><br></pre></td></tr></table></figure>
+<p>这个API会返回要打开的对象句柄，lpFileName可以填写要打开的文件的完整路径，这样就能得到文件的句柄，也快成填写\\.\PHYSICALDRIVE0，这样就能得到已挂载的第一块硬盘的句柄，或者\\.\C，可以打开C盘的句柄。</p>
+<p>需要注意的是，第三个参数需要填成FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE，来保证在你打开该文件/分区/硬盘并读取的时候，别人仍然可以访问它，不然在打开硬盘句柄时系统会拒绝访问。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">DWORD WINAPI **SetFilePointer**(</span><br><span class="line">HANDLE hFile, <span class="comment">//要打开的句柄</span></span><br><span class="line">LONG lDistanceToMove, <span class="comment">//指针偏移的字节数的低32位</span></span><br><span class="line">PLONG lpDistanceToMoveHigh,  <span class="comment">//指针偏移的字节数的高32位，如果文件小于4GB此项为NULL</span></span><br><span class="line">DWORD dwMoveMethod <span class="comment">//设置成基于起始位置还是结束位置</span></span><br><span class="line">);</span><br></pre></td></tr></table></figure>
+<p>这个API可以设置读文件的指针的起点，也引出了下一个需要介绍的API：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">BOOL WINAPI **ReadFile**(</span><br><span class="line">HANDLE hFile, <span class="comment">//要读取的文件句柄</span></span><br><span class="line">LPVOID lpBuffer, <span class="comment">//接收数据的buffer指针</span></span><br><span class="line">DWORD nNumberOfBytesToRead, <span class="comment">//要读取多少字节的数据</span></span><br><span class="line">LPDWORD lpNumberOfBytesRead, <span class="comment">//实际读了多少字节的数据</span></span><br><span class="line">LPOVERLAPPED lpOverlapped <span class="comment">//异步读取的开关</span></span><br><span class="line">);</span><br></pre></td></tr></table></figure>
+<p>使用这个API来读取一定字节数量的数据，而上一个可以设置读取的起点位置。</p>
+<p>既然我们要根据基于硬盘起点的LBA地址定位文件，那么我们就需要物理硬盘的句柄，首先定位MBR，然后读取分区表，得到每个分区的起始LBA地址，并读取分区头部的PBR，得到$MFT项的起始地址，由于MFT线性排布，这样就知道了每个MFT项的LBA地址。然后根据MFT项中每种属性的字节偏移，就能解析MFT项了。这就是<strong>定位过程的实现思路</strong>。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">BOOL WINAPI **DeviceIoControl**(</span><br><span class="line">\_In\_ HANDLE hDevice,</span><br><span class="line">\_In\_ DWORD dwIoControlCode,</span><br><span class="line">\_In\_opt\_ LPVOID lpInBuffer,</span><br><span class="line">\_In\_ DWORD nInBufferSize,</span><br><span class="line">\_Out\_opt\_ LPVOID lpOutBuffer,</span><br><span class="line">\_In\_ DWORD nOutBufferSize,</span><br><span class="line">\_Out\_opt\_ LPDWORD lpBytesReturned,</span><br><span class="line">\_Inout\_opt\_ LPOVERLAPPED lpOverlapped</span><br><span class="line">);</span><br></pre></td></tr></table></figure>
+<p>这个API可以对输入输出设备发送预设的控制码，使用FSCTL_GET_RETRIEVAL_POINTERS控制码，可以根据文件句柄，获得文件每个碎片的VCN、LCN地址和占用簇的数量。使用这个API可以根据文件名定位其LBA地址。</p>
+<p>使用这些API可以完成基本的  LBA&lt;--双向--&gt;文件名  查询流程，但还需要考虑以下问题：</p>
+<ol>
+<li>如何知道一共有多少个有效的MFT项？对于这个信息可以读取$MFT元文件的$BITMAP属性，来获得MFT项的分配情况；</li>
+<li>如何处理大目录？对于碎片很多的文件，或是子文件很多的大目录，会占据多个MFT项来存储所有的常驻属性，这时候需要手动解析索引根属性（0x90）和属性列表属性（0x20）；</li>
+<li>在MBR之后、PBR之前，是一块预留空间，PBR之后、MFT起始之前存有分区引导代码，剩余空间填零，要预先判断输入的LBA地址是否落在这些保留空间里；</li>
+<li>如何处理权限问题？不难推断，直接对MFT项进行解析、对指定扇区进行读取，会破坏Windows原本的ACL访问保护机制，所以程序需要以管理员权限运行，对于较老版本的Visual Studio，需要添加一个资源文件，说明程序所需的权限，从而被链接到可执行文件中；</li>
+<li>如何处置访问过的MFT项？如果对读取的MFT项仅仅索引几个关键属性，然后就将其放过、进入下次循环，那么宝贵的信息就都流失了。可以建立自己的数据结构，将NTFS分区上的文件索引起来，对NTFS日志做增量索引，做成文件搜索工具，搜索速度比Windows自带的搜索工具快很多；</li>
+<li>如何解析以UTF-16保存成Raw bytes的文件名？Windows提供了名为MultiByteToWideChar的函数可以转换widechar，如果你觉得这个函数用起来太麻烦不妨手写代码将Raw bytes按照little-endian的方式转换成widechar；</li>
+<li>对应的，由于并没有将Raw bytes转换成整型数的API，你需要手写一个以little-endian的方式将Raw bytes解析成整型数的函数；</li>
+<li>…………继续考虑下去，假以一定时间，以强迫症作为驱动力，大概就能写出像Everything那样强大的搜索工具了：）</li>
+</ol>
+<p><img src="http://km.oa.com/files/photos/captures/201508/1439199871_97_w794_h552.png" alt=""></p>
+<h2 id="完成感悟"><a href="#完成感悟" class="headerlink" title="完成感悟"></a>完成感悟</h2><p>我去我了个大去，写到现在突然发现这一点都不像我的文风啊喂，怎么好像一篇又臭又长的实验报告啊喂，一点都不愉快的文字写地都快吐血了。其实做完这个小工具，最大的感悟就是：NTFS是个如此靠谱的文件系统！！！在大分区上还在用FAT32的都什么心态。。。</p>
+<p>那么为什么说NTFS是一个靠谱的文件系统呢？FAT文件系统的文件分配表只能列出了每个文件的名称及起始簇，并没有说明这个文件是否存在，而需要通过其所在文件夹的记录来判断，而文件夹入口又包含在文件分配表的索引中。因此在访问文件时，首先要读取文件分配表来确定文件已经存在，然后再次读取文件分配表找到文件的首簇，接着通过链式的检索找到文件所有的存放簇，最终确定后才可以访问。</p>
+<p>而NTFS继续将文件组织成目录，目录也像在 HPFS 中一样被排序。NTFS 在磁盘上没有“特殊”对象，而且对诸如 512 字节扇区之类的基础硬件也没有依赖性。NTFS 是一个可恢复的文件系统，因为它能跟踪针对文件系统的事务。在 FAT 或 HPFS 上执行 CHKDSK 时，系统会检查目录、分配和文件表中指针的一致性。在 NTFS 下，系统会维护针对这些组件的事务日志，因此，CHKDSK 只需将事务回滚到上一个提交点就可以恢复文件系统中的一致性。 每次读写时，它都会检查扇区正确与否。当读取时发现错误，NTFS会报告这个错误;当向磁盘写文件时发现错误，NTFS将会十分智能地换一个完好位置存储数据，操作不会受到任何影响。在这两种情况下，NTFS都会在坏扇区上作标记，以防今后被使用。这种工作模式可以使磁盘错误可以较早地被发现，避免灾难性的事故发生。</p>
+<p>——以上两段引用自<a href="https://www.google.com.hk/url?sa=t&amp;rct=j&amp;q=&amp;esrc=s&amp;source=web&amp;cd=3&amp;ved=0CDIQFjACahUKEwiHy4rXnp7HAhUBsZQKHeTYAYA&amp;url=https%3a%2f%2fsupport%2emicrosoft%2ecom%2fkb%2f100108%2fzh-cn&amp;ei=7HPIVYelO4Hi0gTksYeACA&amp;usg=AFQjCNHyk00OL01HSeCSubT3EpD-PZ6lww&amp;sig2=ArONWenC3TB7FbBf3seSwA" target="_blank" rel="noopener">MSDN</a>。</p>
+<p>如果我们使用的网盘，在同步本地文件的时候，通过读取NTFS日志来检测文件更改（比如坚果云），就能做到实时响应更改，不再需要以每1min或者每5min的周期间隔来扫描整个目录确定更改情况了（比如百度云）。这些都是NTFS带来的方便啊啊喂。</p>
+<p>另外作为从C#转过来的C++开发者，以前我认为C#的语法是C系最佳，在用C++做了两周的开发工作后——越来越觉得C#的语法很优美了……各种LINQ快速查询、装箱拆箱、await简单异步执行……C#在桌面开发中可怜的份额实在对不起这么好的语言啊……嗯，吐槽结束，作为一名合格的开发人员，手动管理内存、使用底层函数都是必备的技能，熟练使用C++还有很长的路要走。</p>
+<p>文章第一张图片是我制作的小工具的使用方法，需要使用管理员权限运行，</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">LocateFile \-f 文件路径  <span class="comment">//给出该文件的LBA地址</span></span><br><span class="line"></span><br><span class="line">LocateFile \-l LBA地址  <span class="comment">//给出该LBA对应的文件</span></span><br><span class="line"></span><br><span class="line">LocateFile \-d         <span class="comment">//DEMO，列出前250个标记为FILE的MFT项</span></span><br></pre></td></tr></table></figure>
+<p>最后，感谢我的导师，以前常用各种工具给人修电脑，这还是第一次亲手制作一个小工具：）</p>
+
+  </div>
+  <div class="post-footer">
+    
+      <ul class="post-tag-list"><li class="post-tag-list-item"><a class="post-tag-list-link" href="/tags/lba/">lba</a></li><li class="post-tag-list-item"><a class="post-tag-list-link" href="/tags/ntfs/">ntfs</a></li><li class="post-tag-list-item"><a class="post-tag-list-link" href="/tags/搜索文件/">搜索文件</a></li></ul>
+    
+
+    <a href="#top" class="top">Back to Top</a>
+  </div>
+</article>
+<footer>
+  &copy; 2018
+  <span class="author">
+    二葱
+  </span>
+</footer>
+
+<script src="https://unpkg.com/mermaid@7.1.2/dist/mermaid.min.js"></script>
+<script>
+  if (window.mermaid) {
+    mermaid.initialize({theme: 'forest'});
+  }
+</script>
+
+    </div>
+  </body>
+</html>
