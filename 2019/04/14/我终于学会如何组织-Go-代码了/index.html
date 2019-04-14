@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+  <!DOCTYPE html>
+<html lang="en">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1">
+  
+  <title>我终于学会如何组织 Go 代码了 - 二葱写字的地方</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+  
+  <meta name="keywords" content="golang,docker,makefile">
+  
+  
+    <link rel="shortcut icon" type="image/x-icon" href="/images/favicon.png?v=1.02">
+  
+  
+    <link rel="alternate" href="/atom.xml " title="二葱写字的地方" type="application/atom+xml">
+  
+
+  <link rel="stylesheet" href="/css/style.css">
+</head></html>
+  <body>
+    <div class="container">
+      <header class="header">
+  <div class="blog-title">
+    <a href="/" class="logo">二葱写字的地方</a>
+    <div class="subtitle"></div>
+  </div>
+  <nav class="navbar">
+    <ul class="menu">
+      
+        <li class="menu-item">
+          <a href="/" class="menu-item-link">Home</a>
+        </li>
+      
+        <li class="menu-item">
+          <a href="/archives" class="menu-item-link">Archives</a>
+        </li>
+      
+        <li class="menu-item">
+          <a href="/about" class="menu-item-link">About</a>
+        </li>
+      
+    </ul>
+  </nav>
+</header>
+<article class="post">
+  <div class="post-title">
+    <h1 class="article-title">我终于学会如何组织 Go 代码了</h1>
+  </div>
+   <div class="post-meta">
+    <span class="post-time">2019-04-14</span>
+  </div>
+  <div class="post-content">
+    <h1 id="吐槽向-我终于学会如何组织-Go-代码了"><a href="#吐槽向-我终于学会如何组织-Go-代码了" class="headerlink" title="(吐槽向) 我终于学会如何组织 Go 代码了"></a>(吐槽向) 我终于学会如何组织 Go 代码了</h1><h2 id="患者病史"><a href="#患者病史" class="headerlink" title="患者病史"></a>患者病史</h2><p>患者本人有多年的强迫症病史，从事客户端编程两年有余，深受剥离代码和环境配置之苦；转后端开发约半年，脑子里仍然存在着 “💡哇哈哈哈哈，老子终于能任意使用自己喜欢的语言、时刻使用最新的版本了” 这样的幻想。</p>
+<p>为了实现最初的构想，花了 30 分钟入门 Go 语言，写了一段“只是能用”的代码。现在 idea 已经证明可行，要正正经经的重构之前的 demo，更好地组织代码、并且在上面添加更多功能了。</p>
+<p>因为要正正经经的编写 Go 的项目，所以该患者学习了 <strong>Go 包管理的历史</strong>，一度心脏骤停、无法呼吸。直到看到 Go Modules 一章，才感觉身体有所缓解。服用 <code>VSCode</code> 💊药丸、 <code>Go Mod</code> 💊药丸、十味 <code>docker</code> 多阶镜像💊大补丸之后，方彻底治愈。</p>
+<p>本文为吐槽向，请大家以搞笑的态度看待，不要太认真啦 ^_^</p>
+<h2 id="患者病历"><a href="#患者病历" class="headerlink" title="患者病历"></a>患者病历</h2><blockquote>
+<p>姓名：曹二葱</p>
+<p>病史：强迫症、健忘症、任天堂游戏依赖症、懒癌晚期</p>
+<p>籍贯：海拉尔人、乌贼星人（Booyah～</p>
+<p>症状：不擅长记忆过长的命令参数、无法接受超过 <strong>100MB</strong> 的 docker 镜像、无法接受每次构建都拉取<strong>依赖项</strong>、无法接受把依赖项的代码<strong>放到本地路径</strong>、无法接受把本地代码路径与 <strong>$某PATH</strong> 关联、对 <strong>python 2.x</strong> 的代码过敏</p>
+<p>经历：打架没赢过，吵架没输过</p>
+<p>偏好：</p>
+<ol>
+<li>喜欢 <code>docker + k8s</code> 带来的开发、构建、部署一条龙，不喜欢配置环境、裸机编译、手动部署</li>
+<li>喜欢 <code>anaconda</code>、<code>miniconda</code> 一站式环境解决方案，不喜欢在安装依赖项报错的海洋中泡浮</li>
+<li>喜欢现代化语言 + 现代化包管理工具，不喜欢手动下载源码编译 SDK</li>
+<li>喜欢 <code>markdown</code> 并用 <code>mermaid</code> 包办一切图表绘制，不喜欢二进制格式的文档、图表文件</li>
+</ol>
+</blockquote>
+<h2 id="康复疗程"><a href="#康复疗程" class="headerlink" title="康复疗程"></a>康复疗程</h2><h3 id="1-抛弃-GOPATH"><a href="#1-抛弃-GOPATH" class="headerlink" title="1. 抛弃 $GOPATH"></a>1. 抛弃 $GOPATH</h3><p>作为 Python 用户，我们都知道，如果你使用了外部库，就最好编写一份 requirements.txt，就算懒得自己写，也可以自动生成一个：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 先装个 pipreqs</span></span><br><span class="line">pipreqs . --force</span><br></pre></td></tr></table></figure>
+<p>大家拿到代码后，先 <code>pip install -r requirements.txt</code> 一下，只要别碰 python 2.x 的老代码，基本不怎么需要关心运行环境和依赖项的问题。就算需要对付 python 2.x 的代码，也可以用 pyenv 来管理机器上安装的不同版本的运行时，你说对不？</p>
+<p>另外，在 Python 里用相对路径引用代码也很方便、不需要集中管理代码。但 Go 的话，据说以前 Google 内部都基于同一份代码库进行开发，也就没有包依赖的问题……</p>
+<p>所以也就有了 \$GOPATH 的概念，你得把自己存代码的路径纳入 \$GOPATH 里 ，而且 Go 里的包名都很奇特，不仅带有包名本身、还长得很像下载链接，比如：<code>github.com/gomodule/redigo</code>。除了数不清的民间包管理工具，Go 里还有个 <code>vendor</code> 的概念，可以把你所依赖的包的源码放到 vendor 里、就不用往 \$GOPATH 里扔了。但我想没人愿意这样做吧？只有古老的 C++，因为没有官方包管理工具的缘故，才需要把依赖包的代码 down 下来、跟自己写的代码一并存放。有谁不想写一个 <code>requirements.txt</code>，然后就忘掉依赖项的事情呢？</p>
+<p>但是自从 Go 1.11 版本里 Go Modules 的横空出事（误），已经可以做到彻底摒弃 \$GOPATH 了。</p>
+<p>只需要 <code>go mod init packagename</code> 一下，就能生成一个类似 <code>requirements.txt</code> 这样的依赖包摘要列表了。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">go mod init hello</span><br><span class="line">...</span><br><span class="line"><span class="comment"># 一顿骚操作之后</span></span><br><span class="line">go mod download</span><br></pre></td></tr></table></figure>
+<p>依赖并不是下载到<code>$GOPATH</code>中，而是<code>$GOPATH/pkg/mod</code>中，多个项目可以共享缓存的module。</p>
+<p><code>go.mod</code> 文件大概是这样子的：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">module adapter</span><br><span class="line"></span><br><span class="line">require (</span><br><span class="line">	github.com/gomodule/redigo v1.7.0 // indirect</span><br><span class="line">	github.com/gorilla/mux v1.7.1</span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>你可以通过 <code>go get ./...</code>让它查找依赖，并记录在<code>go.mod</code>文件中(你还可以指定 <code>-tags</code>,这样可以把tags的依赖都查找到)。</p>
+<p>通过<code>go mod tidy</code>也可以用来为<code>go.mod</code>增加丢失的依赖，删除不需要的依赖。</p>
+<p>——《<a href="https://colobu.com/2018/08/27/learn-go-module/" target="_blank" rel="noopener">跳出Go module的泥潭</a>》</p>
+</blockquote>
+<p>于是，代码就可以这样组织了（总算搞清楚了写代码的第一件事！）：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">tree .</span><br><span class="line"></span><br><span class="line">├── Dockerfile</span><br><span class="line">├── hello.go</span><br><span class="line">├── go.mod</span><br><span class="line">└── utils</span><br><span class="line">    ├── digestgen.go</span><br><span class="line">    ├── httphelper.go</span><br><span class="line">    ├── kvhelper.go</span><br><span class="line">    ├── loghelper.go</span><br><span class="line">    └── protocol.go</span><br><span class="line"></span><br><span class="line">1 directory, 8 files</span><br></pre></td></tr></table></figure>
+<p>至于 go.sum 如何保存校验信息、如何使用 <code>go mod vendor</code> 来 fallback 到以前的处理方式等，可以参考其他治疗手册。</p>
+<h3 id="2-构建极小的-docker-镜像"><a href="#2-构建极小的-docker-镜像" class="headerlink" title="2. 构建极小的 docker 镜像"></a>2. 构建极小的 docker 镜像</h3><p>众所周知，带有 go 完整编译环境的 <code>golang:latest</code> 镜像足足有 <font color="red">772MB</font> 之大，放到生产环境可谓宰相肚里能撑船（误），实在让人无法接受。但就算是十分精简的 <code>golang:alpine</code> 也有 350MB，那该怎么办呢？</p>
+<p>我们知道，go 编译出来的文件，是可以做到直接执行、不带依赖的。所以我们可以使用一阶镜像来完成 go 项目的构建、然后装载到二阶镜像中执行。</p>
+<figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">##### 一阶镜像 #####</span></span><br><span class="line"><span class="keyword">FROM</span> golang:alpine as builder</span><br><span class="line"></span><br><span class="line"><span class="keyword">RUN</span><span class="bash"> adduser -D -g <span class="string">''</span> appuser</span></span><br><span class="line"><span class="bash">WORKDIR /app</span></span><br><span class="line"><span class="bash">COPY . .</span></span><br><span class="line"><span class="bash"></span></span><br><span class="line"><span class="bash"><span class="comment"># bla bla bla</span></span></span><br><span class="line"><span class="bash">...</span></span><br><span class="line"><span class="bash"></span></span><br><span class="line"><span class="bash">RUN go build xxx -o /go/bin/hello .</span></span><br><span class="line"><span class="bash"><span class="comment">##### 二阶镜像 #####</span></span></span><br><span class="line"><span class="bash">FROM scratch</span></span><br><span class="line"><span class="bash">WORKDIR /app</span></span><br><span class="line"><span class="bash">COPY --from=builder /go/bin/hello /go/bin/hello</span></span><br><span class="line"><span class="bash"><span class="comment"># 就算在容器中，也不要使用 root 用户</span></span></span><br><span class="line"><span class="bash">USER appuser</span></span><br><span class="line"><span class="bash">ENV PORT=3001</span></span><br><span class="line"><span class="bash">ENTRYPOINT [<span class="string">"/go/bin/hello"</span>]</span></span><br></pre></td></tr></table></figure>
+<p>如果去掉调试信息、只 target 我们的目标环境，可以这样：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">RUN CGO_ENABLED=0 GOOS=linux go build -ldflags=<span class="string">"-w -s"</span> -a -installsuffix cgo -o /go/bin/hello .</span><br></pre></td></tr></table></figure>
+<p>如果还能满足所有下列情况，那么<strong>强迫症</strong>的症状，会缓解的更快：</p>
+<ul>
+<li>每个容器只运行一个进程</li>
+<li>及时更新基础镜像的版本</li>
+<li>不要在容器中存储业务数据</li>
+<li>不要在容器中存储密钥</li>
+<li>容器中不要使用 root 用户来运行</li>
+<li>考虑 SSL 服务</li>
+<li>不要每次构建、都<strong>重新下载</strong>依赖包（那样好慢……</li>
+</ul>
+<p>最后，写成的 dockerfile 如下，稍作改动就能用于新的项目了：</p>
+<figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">###########################</span></span><br><span class="line"><span class="comment"># STEP 1 编译源代码</span></span><br><span class="line"><span class="comment">############################</span></span><br><span class="line"><span class="keyword">FROM</span> golang:alpine as builder</span><br><span class="line"></span><br><span class="line"><span class="keyword">RUN</span><span class="bash"> apk update &amp;&amp; apk add --no-cache git ca-certificates tzdata &amp;&amp; update-ca-certificates &amp;&amp; apk add tree</span></span><br><span class="line"><span class="bash"></span></span><br><span class="line"><span class="bash">RUN adduser -D -g <span class="string">''</span> appuser</span></span><br><span class="line"><span class="bash"></span></span><br><span class="line"><span class="bash">WORKDIR /app</span></span><br><span class="line"><span class="bash"></span></span><br><span class="line"><span class="bash"><span class="comment"># 先拷贝 go.mod 安装依赖项</span></span></span><br><span class="line"><span class="bash"><span class="comment"># 这样改变源代码时，重新构建镜像，就不用重复拉取依赖项了(use cache)</span></span></span><br><span class="line"><span class="bash">COPY ./go.mod ./go.mod</span></span><br><span class="line"><span class="bash">RUN go mod download</span></span><br><span class="line"><span class="bash"></span></span><br><span class="line"><span class="bash"><span class="comment"># 再拷贝源代码</span></span></span><br><span class="line"><span class="bash">COPY . .</span></span><br><span class="line"><span class="bash">RUN <span class="built_in">pwd</span> &amp;&amp; tree .</span></span><br><span class="line"><span class="bash"></span></span><br><span class="line"><span class="bash"><span class="comment"># 编译（尽量干掉 GOPATH）</span></span></span><br><span class="line"><span class="bash"><span class="comment"># ENV GOPATH="$(pwd):$GOPATH"</span></span></span><br><span class="line"><span class="bash">RUN CGO_ENABLED=0 GOOS=linux go build -ldflags=<span class="string">"-w -s"</span> -a -installsuffix cgo -o /go/bin/adapter adapter.go</span></span><br><span class="line"><span class="bash"></span></span><br><span class="line"><span class="bash"><span class="comment">############################</span></span></span><br><span class="line"><span class="bash"><span class="comment"># STEP 2 构建执行镜像</span></span></span><br><span class="line"><span class="bash"><span class="comment">############################</span></span></span><br><span class="line"><span class="bash">FROM scratch</span></span><br><span class="line"><span class="bash"></span></span><br><span class="line"><span class="bash"><span class="comment"># 导入 HTTPS 证书等</span></span></span><br><span class="line"><span class="bash">COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo</span></span><br><span class="line"><span class="bash">COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/</span></span><br><span class="line"><span class="bash">COPY --from=builder /etc/passwd /etc/passwd</span></span><br><span class="line"><span class="bash"></span></span><br><span class="line"><span class="bash"><span class="comment"># 拷贝二进制</span></span></span><br><span class="line"><span class="bash">WORKDIR /app</span></span><br><span class="line"><span class="bash">COPY --from=builder /go/bin/adapter /go/bin/adapter</span></span><br><span class="line"><span class="bash"></span></span><br><span class="line"><span class="bash"><span class="comment"># 使用普通账户权限，不使用 root</span></span></span><br><span class="line"><span class="bash">USER appuser</span></span><br><span class="line"><span class="bash"></span></span><br><span class="line"><span class="bash"><span class="comment"># 服务端口</span></span></span><br><span class="line"><span class="bash">ENV PORT=3001</span></span><br><span class="line"><span class="bash"></span></span><br><span class="line"><span class="bash"><span class="comment"># 默认运行 adapter</span></span></span><br><span class="line"><span class="bash">ENTRYPOINT [<span class="string">"/go/bin/adapter"</span>]</span></span><br></pre></td></tr></table></figure>
+<p>差点忘了截图，这样构建出来的 Go 项目、可以直接拉起容器运行的、才巴掌丁点大——<font color="red"> <strong>7MB</strong> </font>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">docker image ls | grep hello</span><br><span class="line">hello          v1                  7c6db3e85f99        About an hour ago   7.01MB</span><br></pre></td></tr></table></figure>
+<h3 id="3-使用-Makefile-忘记命令行"><a href="#3-使用-Makefile-忘记命令行" class="headerlink" title="3. 使用 Makefile 忘记命令行"></a>3. 使用 Makefile 忘记命令行</h3><p>本机构建镜像、拉起调试、导出镜像时，会用到 docker 命令行。鉴于患者有严重的健忘症，记不住那么多参数，所以使用 Makefile 来简化记忆过程。</p>
+<figure class="highlight makefile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">img_ver=v1</span><br><span class="line">img_name=my_docker_image_name</span><br><span class="line"></span><br><span class="line"><span class="section">build:</span></span><br><span class="line">	docker build -t <span class="variable">$(img_name)</span>:<span class="variable">$(img_ver)</span> .</span><br><span class="line">	docker image ls | grep <span class="variable">$(img_name)</span></span><br><span class="line"></span><br><span class="line"><span class="section">export:</span></span><br><span class="line">	docker save -o ../<span class="variable">$(img_name)</span><span class="variable">$(img_ver)</span>.tar <span class="variable">$(img_name)</span>:<span class="variable">$(img_ver)</span></span><br><span class="line"></span><br><span class="line"><span class="section">debug:</span></span><br><span class="line">	docker run -it --rm --name <span class="string">"hello_instance"</span> -p 3000:3001 --entrypoint <span class="string">"/go/bin/hello"</span> <span class="variable">$(img_name)</span>:<span class="variable">$(img_ver)</span></span><br></pre></td></tr></table></figure>
+<p>这样的话，就可以放心地忘掉那些麻烦的参数：</p>
+<ul>
+<li><code>make build</code> 一下，就开始构建镜像了，只需要偶尔改一下 img_ver 字段来使用新的版本号（或者一直填 latest，额，等等，又要犯病了…）</li>
+<li><code>make debug</code> 一下，就像本机调试一样，在当前命令行启动服务了，而且 ctrl+c 杀掉进程后，自动销毁容器，干干净净</li>
+<li><code>make export</code> 一下，保存镜像到本地，上传到 k8s 容器平台上（比如蓝盾），补一个 deployment.yaml （或者使用图形化界面创建）就可以用了</li>
+</ul>
+<h3 id="4-用上-CI-CD-流水线"><a href="#4-用上-CI-CD-流水线" class="headerlink" title="4. 用上 CI/CD 流水线"></a>4. 用上 CI/CD 流水线</h3><p>这是未完成的最后一步，日后采用流水线构建，代码更新触发镜像构建、部署更新一条龙、放到腾讯云 TKE 上一劳永逸。</p>
+<h2 id="出院报告"><a href="#出院报告" class="headerlink" title="出院报告"></a>出院报告</h2><p>最后，该患者终于学会了如何组织 Go 的代码、以及本地/联机运行的姿势。最终代码结构的组织如下：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">tree .                                                       </span><br><span class="line"></span><br><span class="line">.</span><br><span class="line">├── Dockerfile		<span class="comment"># 构建镜像</span></span><br><span class="line">├── Makefile			<span class="comment"># 简化命令行</span></span><br><span class="line">├── adapter.go		<span class="comment"># Go 主要代码</span></span><br><span class="line">├── go.mod				<span class="comment"># “requirements.txt”</span></span><br><span class="line">├── go.sum				<span class="comment"># 校验信息，防止 XcodeGhost 事件（误</span></span><br><span class="line">└── utils					<span class="comment"># Go 基础代码</span></span><br><span class="line">    ├── digestgen.go</span><br><span class="line">    ├── httphelper.go</span><br><span class="line">    ├── kvhelper.go</span><br><span class="line">    ├── loghelper.go</span><br><span class="line">    └── protocol.go</span><br><span class="line"></span><br><span class="line">1 directory, 10 files</span><br></pre></td></tr></table></figure>
+<p>愿原力与你同在。</p>
+
+  </div>
+  <div class="post-footer">
+    
+      <ul class="post-tag-list"><li class="post-tag-list-item"><a class="post-tag-list-link" href="/tags/docker/">docker</a></li><li class="post-tag-list-item"><a class="post-tag-list-link" href="/tags/golang/">golang</a></li><li class="post-tag-list-item"><a class="post-tag-list-link" href="/tags/makefile/">makefile</a></li></ul>
+    
+
+    <a href="#top" class="top">Back to Top</a>
+  </div>
+</article>
+<footer>
+  &copy; 2019
+  <span class="author">
+    二葱
+  </span>
+</footer>
+
+<script src="https://unpkg.com/mermaid@7.1.2/dist/mermaid.min.js"></script>
+<script>
+  if (window.mermaid) {
+    mermaid.initialize({theme: 'forest'});
+  }
+</script>
+
+    </div>
+  </body>
+</html>
