@@ -120,6 +120,20 @@
 <h3 id="4-用上-CI-CD-流水线"><a href="#4-用上-CI-CD-流水线" class="headerlink" title="4. 用上 CI/CD 流水线"></a>4. 用上 CI/CD 流水线</h3><p>这是未完成的最后一步，日后采用流水线构建，代码更新触发镜像构建、部署更新一条龙、放到腾讯云 TKE 上一劳永逸。</p>
 <h2 id="出院报告"><a href="#出院报告" class="headerlink" title="出院报告"></a>出院报告</h2><p>最后，该患者终于学会了如何组织 Go 的代码、以及本地/联机运行的姿势。最终代码结构的组织如下：</p>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">tree .                                                       </span><br><span class="line"></span><br><span class="line">.</span><br><span class="line">├── Dockerfile		<span class="comment"># 构建镜像</span></span><br><span class="line">├── Makefile			<span class="comment"># 简化命令行</span></span><br><span class="line">├── adapter.go		<span class="comment"># Go 主要代码</span></span><br><span class="line">├── go.mod				<span class="comment"># “requirements.txt”</span></span><br><span class="line">├── go.sum				<span class="comment"># 校验信息，防止 XcodeGhost 事件（误</span></span><br><span class="line">└── utils					<span class="comment"># Go 基础代码</span></span><br><span class="line">    ├── digestgen.go</span><br><span class="line">    ├── httphelper.go</span><br><span class="line">    ├── kvhelper.go</span><br><span class="line">    ├── loghelper.go</span><br><span class="line">    └── protocol.go</span><br><span class="line"></span><br><span class="line">1 directory, 10 files</span><br></pre></td></tr></table></figure>
+<h2 id="更新"><a href="#更新" class="headerlink" title="更新"></a>更新</h2><p>患者后来留意到，自己把 adapter.go 放到了根目录下，没有放到包里。在继续整理代码的时候，遇到了两个本地包之间引用的问题。</p>
+<p>上文中只提到了如何使用 <code>go mod</code> 引入外部包，没提到如何引入自己开发的<strong>本地的包</strong>。所以补充一下，懒癌发作，贴上原文好了。</p>
+<blockquote>
+<p>So if you have two local modules <code>host/remote</code> and <code>host/local</code> and you want to import <code>host/remote</code> in the module <code>host/local</code>:</p>
+<p>Open the <code>host/local</code> <code>go.mod</code> file, should look something like this:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">&gt; module host/local</span><br><span class="line">&gt; </span><br><span class="line">&gt; require (</span><br><span class="line">&gt; ...</span><br><span class="line">&gt; )</span><br><span class="line">&gt;</span><br></pre></td></tr></table></figure>
+</blockquote>
+<blockquote>
+<p>Edit it to look like this:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">&gt; module host/local</span><br><span class="line">&gt; </span><br><span class="line">&gt; require (</span><br><span class="line">&gt; ...</span><br><span class="line">&gt; host/remote v0.0.0</span><br><span class="line">&gt; )</span><br><span class="line">&gt; </span><br><span class="line">&gt; replace host/remote =&gt; ../remote</span><br><span class="line">&gt;</span><br></pre></td></tr></table></figure>
+</blockquote>
+<blockquote>
+<p>—— <a href="https://www.reddit.com/r/golang/comments/ah0w1q/modules_and_local_imports/" target="_blank" rel="noopener">Reddit</a></p>
+</blockquote>
 <p>愿原力与你同在。</p>
 
   </div>
