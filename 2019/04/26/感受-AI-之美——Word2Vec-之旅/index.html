@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+  <!DOCTYPE html>
+<html lang="en">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1">
+  
+  <title>感受 AI 之美——Word2Vec 之旅 - 二葱写字的地方</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+  
+  <meta name="keywords" content="Word2Vec,NLP,单词加减计算">
+  
+  
+    <link rel="shortcut icon" type="image/x-icon" href="/images/favicon.png?v=1.02">
+  
+  
+    <link rel="alternate" href="/atom.xml " title="二葱写字的地方" type="application/atom+xml">
+  
+
+  <link rel="stylesheet" href="/css/style.css">
+</head></html>
+  <body>
+    <div class="container">
+      <header class="header">
+  <div class="blog-title">
+    <a href="/" class="logo">二葱写字的地方</a>
+    <div class="subtitle"></div>
+  </div>
+  <nav class="navbar">
+    <ul class="menu">
+      
+        <li class="menu-item">
+          <a href="/" class="menu-item-link">Home</a>
+        </li>
+      
+        <li class="menu-item">
+          <a href="/archives" class="menu-item-link">Archives</a>
+        </li>
+      
+        <li class="menu-item">
+          <a href="/about" class="menu-item-link">About</a>
+        </li>
+      
+    </ul>
+  </nav>
+</header>
+<article class="post">
+  <div class="post-title">
+    <h1 class="article-title">感受 AI 之美——Word2Vec 之旅</h1>
+  </div>
+   <div class="post-meta">
+    <span class="post-time">2019-04-26</span>
+  </div>
+  <div class="post-content">
+    <p>去年，AI Lab 公开了一份“<a href="https://ai.tencent.com/ailab/nlp/embedding.html" target="_blank" rel="noopener">大规模高质量中文词向量数据</a>”，使用腾讯新闻、天天快报和百科词条作为语料，训练出的词向量模型。这份数据填补了中文词向量数据的空白。</p>
+<p>这次，二葱单纯从实践的角度，试玩一下这份数据。用这份词向量数据，制作一个“单词加减计算器”，来瞻仰一下数学之美、Word2Vec 之美，以及无监督训练出来的模型，竟然能如此令人大呼<strong>卧槽</strong>地体现出现实世界之间千丝万缕的联系。等不及的，可以直接翻到最后看翻车现场=。=</p>
+<h2 id="主要困难"><a href="#主要困难" class="headerlink" title="主要困难"></a>主要困难</h2><p>AI Lab 开源的这份数据，重达 6GB，解压后有 16GB。使用这份数据，需要一台<strong>内存足够大</strong>的机器，比如一台 M10 型号（12 核 128GB 内存）的物理机——抱运维大大的大腿，求一台！</p>
+<p>其次，公司 IDC 机器申请外网访问比较麻烦，tlinux 上的软件源版本陈旧，而且安装部分科学运算的 python 库（比如 numpy 和 annoy）时还需要当场编译 C++ 模块，用膝盖思考一下就知道<strong>环境配置</strong>这里面肯定有坑！</p>
+<p>最后，python 装好了、gensim 也学会了，但数据量级实在太大，每次取最近邻要挨个暴力运算 800 条词汇的 200 维向量距离，如何在<strong>常量时间</strong>内取得一定精度的结果呢？</p>
+<p>等等，长时间的模型训练总不能一直盯着它吧？还得想个办法既能让电脑努力地运算、又能主动通知关键流程的错误码才行——这样才能边工作边上上某 Hub 划<strong>划水</strong>啊！</p>
+<h2 id="基本原理"><a href="#基本原理" class="headerlink" title="基本原理"></a>基本原理</h2><p>一句话解释 Word2Vec：</p>
+<ul>
+<li>Word2Vec 可以得到汉语单词的数字表达</li>
+<li>这份数据里，使用 200 维的向量来描述 800 万条词汇</li>
+<li>人通过象形符号和生活记忆来区分不同的词汇，机器通过向量之间的距离来区分不同的词汇</li>
+</ul>
+<p>由于 Word2Vec 太过出名，资料有很多就不展开了，它主要包含两个模型：</p>
+<ul>
+<li>连续词袋（CBOW）模型：用上下文预测当前词</li>
+<li>Skip-gram 模型：用当前词预测上下文</li>
+</ul>
+<p>怎样体会 Word2Vec 的数学含义呢？我们想象一个三位坐标系，每个点代表一个单词，我们取两个点画一条有方向的线段，然后任取空间内另外一点，叠加上刚才的平行线。</p>
+<p><img src="https://ws3.sinaimg.cn/large/006tNc79gy1g2ge6wwm5vj318g0o742k.jpg" alt="word2vec"></p>
+<p>看到了吗？国王(king) -&gt; 皇后(queen) 和 男人(man) -&gt; 女人(woman) 是平行且等长的，也就意味着：</p>
+<blockquote>
+<p>国王 - 皇后 = 男人 - 女人</p>
+</blockquote>
+<p>根据加法交换律：</p>
+<blockquote>
+<p>国王 - 男人 + 女人 = 皇后</p>
+</blockquote>
+<p>我们有告诉计算机国王是男人、皇后是女人吗？没有——这个模型是<strong>无监督</strong>得到的。</p>
+<p>那么为什么能得到这么有现实含义的等式？“一个人是由他所在环境塑造的”——这就是<strong>上下文</strong>预测。</p>
+<p>明白这些之后，只需要再有一些数学基础，就不难理解 Word2Vec 的原理了。</p>
+<h2 id="上手实践"><a href="#上手实践" class="headerlink" title="上手实践"></a>上手实践</h2><p>上面提出的“主要困难”，其实都是真正上手实践的时候遇到的问题。</p>
+<p>首先是内存问题，起初我以为 6核 16GB 内存的 MacBook 能 hold 的住 16GB 大小的数据集。后来才知道我想多了，系统保留2GB、Chrome吃掉2GB、VSCode吃掉4GB，剩下的哪够 16GB 啊……再加上 256GB 的存储，剩余空间少的可怜，数据加载到一半，磁盘剩余空间 1MB 都不到了——虚拟内存都无从分配。mem alloc failed，程序崩溃。</p>
+<p>然后打算用一台 M10 机型来加载模型，M10 机器内存够大，可以尽情浪费。此时脑海中回想起环境配置的痛苦，直觉告诉我——如果不用 docker 你就等着一下午浪费在环境配置上吧～</p>
+<p>在计算复杂度上，gensim 计算一个向量和所有向量的相似度时，需要遍历每个向量，虽然复杂度是 O(n) 但也架不住八百万条数据啊……所以二葱使用了 spotify 公司开源的 <code>annoy</code> 框架。</p>
+<p>用 <code>annoy</code> 使用二叉树构建 200 维的高维空间，可以通过牺牲精度来换取比暴力搜索更快的搜索速度。这样复杂度就由 O(n) 减少到 O(logN) 了。</p>
+<p><img src="https://ws3.sinaimg.cn/large/006tNc79gy1g2ge6xvoawj30sg0b840s.jpg" alt="二叉树"></p>
+<p>最后是要一直盯着控制台等结果的问题，也许看一眼、看两眼、看十眼都还在计算中，看看朋友圈、刷刷某 Hub，再看一眼发现两个钟前就算完了=。= 这不就一下午过去了吗？过分了过分了，我可是很热爱工作的人啊！</p>
+<p>解决这个问题，当然是使用 bot 来推送整个训练过程中关键步骤的结果、和每次运算的日志。</p>
+<p><img src="https://ws2.sinaimg.cn/large/006tNc79gy1g2ge6z983zj30hs0vk784.jpg" alt="Bot推送步骤结果"></p>
+<h2 id="代码简析"><a href="#代码简析" class="headerlink" title="代码简析"></a>代码简析</h2><p>良好的文档、必要的注释和简单到<strong>开箱即用</strong>的导入方法，应该是程序员的基本素养！不要让别人在试图复用你代码的时候，淹没在一堆报错信息的海洋里：）</p>
+<table>
+<thead>
+<tr>
+<th>代码 Repo 地址</th>
+<th><a href="https://git.code.oa.com/pixelcao/WordCalc" target="_blank" rel="noopener">https://git.code.oa.com/pixelcao/WordCalc</a></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>环境要求</td>
+<td>仅需装有 docker 即可</td>
+</tr>
+</tbody>
+</table>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 编译代码、生成镜像</span></span><br><span class="line">make build</span><br><span class="line"><span class="comment"># 导出镜像</span></span><br><span class="line">make <span class="built_in">export</span></span><br><span class="line"><span class="comment"># 本地训练</span></span><br><span class="line">make run</span><br></pre></td></tr></table></figure>
+<p>不像 Golang 工程的镜像，可以用二阶构建的办法、构建出不到 10MB 的迷你镜像，Python 项目镜像因为携带运行时库，还有必要的科学运算库，再加上项目代码已经达到上百 MB 了，不能把模型数据也放进去，不然会超过 4GB。为了减小构建出来镜像的体积，要在容器运行时再下载镜像。</p>
+<p>为了方便排查错误，最好在执行真正的 Python 代码前、先运行一个 gensim 的 hello world，并推送一条消息，来保证构建出来的运行环境是正常的，这样才能<strong>放心</strong>地去边刷朋友圈边等结果推送。</p>
+<p>下面给出一些关键代码：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#!/usr/bin/env python</span></span><br><span class="line"><span class="comment"># -*- coding: utf-8 -*-</span></span><br><span class="line"><span class="keyword">from</span> gensim.models <span class="keyword">import</span> KeyedVectors</span><br><span class="line"><span class="keyword">from</span> collections <span class="keyword">import</span> OrderedDict</span><br><span class="line"><span class="keyword">import</span> json</span><br><span class="line"><span class="keyword">import</span> time</span><br><span class="line"><span class="keyword">import</span> push</span><br><span class="line"></span><br><span class="line"><span class="keyword">try</span>:</span><br><span class="line">    <span class="keyword">from</span> gensim.similarities.index <span class="keyword">import</span> AnnoyIndexer</span><br><span class="line"><span class="keyword">except</span> ImportError:</span><br><span class="line">    print(<span class="string">'import gensim.annoy error'</span>)</span><br><span class="line">    push.push_to_rtx(push.generate_rtx_markdown(<span class="string">"gensim引导失败"</span>))</span><br><span class="line">    <span class="keyword">raise</span> ValueError(<span class="string">"anny indexer 加载失败"</span>)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">WordCalc</span>:</span></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">__init__</span><span class="params">(self)</span>:</span></span><br><span class="line">        <span class="comment"># 0: 未训练</span></span><br><span class="line">        <span class="comment"># 1: 正在加载gensim版</span></span><br><span class="line">        <span class="comment"># 2: gensim版可用</span></span><br><span class="line">        <span class="comment"># 3: 正在构建annoy树</span></span><br><span class="line">        <span class="comment"># 4: annoy版可用</span></span><br><span class="line">        self.status = <span class="number">0</span></span><br><span class="line">        push.push_to_rtx(push.generate_rtx_markdown(<span class="string">"wordcalc出仓状态良好"</span>))</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">train_with_gensim</span><span class="params">(self)</span>:</span></span><br><span class="line">        self.status = <span class="number">1</span></span><br><span class="line">        push.push_to_rtx(push.generate_rtx_markdown(<span class="string">"gensim转子引擎开始加热"</span>))</span><br><span class="line">        self.tc_wv_model = KeyedVectors.load_word2vec_format(</span><br><span class="line">            <span class="string">'./Tencent_AILab_ChineseEmbedding.txt'</span>, binary=<span class="keyword">False</span>)</span><br><span class="line">        push.push_to_rtx(push.generate_rtx_markdown(<span class="string">"gensim转子引擎加热完毕"</span>))</span><br><span class="line">        self.status = <span class="number">2</span></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">train_with_annoy</span><span class="params">(self)</span>:</span></span><br><span class="line">        self.status = <span class="number">3</span></span><br><span class="line">        push.push_to_rtx(push.generate_rtx_markdown(<span class="string">"annoy向量空间开始注水"</span>))</span><br><span class="line">        self.annoy_index = AnnoyIndexer(self.tc_wv_model, <span class="number">200</span>)</span><br><span class="line">        fname = <span class="string">'tc_index_genoy.index'</span></span><br><span class="line">        self.annoy_index.save(fname)</span><br><span class="line">        <span class="comment"># 导出训练结果，以后直接 load 即可</span></span><br><span class="line">        <span class="comment"># annoy_index = AnnoyIndexer()</span></span><br><span class="line">        <span class="comment"># annoy_index.load(fname)</span></span><br><span class="line">        <span class="comment"># annoy_index.model = tc_wv_model</span></span><br><span class="line">        push.push_to_rtx(push.generate_rtx_markdown(<span class="string">"annoy向量空间注水完毕"</span>))</span><br><span class="line">        self.status = <span class="number">4</span></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">def</span> <span class="title">calc</span><span class="params">(self, positive_set, negative_set)</span>:</span></span><br><span class="line">        <span class="keyword">if</span> self.status == <span class="number">2</span> <span class="keyword">or</span> self.status == <span class="number">3</span>:</span><br><span class="line">            result = self.tc_wv_model.most_similar(</span><br><span class="line">                positive=positive_set, negative=negative_set, topn=<span class="number">10</span>)</span><br><span class="line">            <span class="keyword">return</span> result</span><br><span class="line">        <span class="keyword">elif</span> self.status == <span class="number">4</span>:</span><br><span class="line">            result = self.tc_wv_model.most_similar(</span><br><span class="line">                positive=positive_set, negative=negative_set, indexer=self.annoy_index, topn=<span class="number">10</span>)</span><br><span class="line">            <span class="keyword">return</span> result</span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            <span class="keyword">return</span> []</span><br></pre></td></tr></table></figure>
+<p>这里给 IEG 的蓝盾容器平台做个广告，容器化之后使用蓝盾 k8s 部署上云，重启、扩容、调度服务变得很简单。</p>
+<p><img src="https://ws1.sinaimg.cn/large/006tNc79gy1g2ge71kp0xj30xa0oigoz.jpg" alt="k8s x docker"></p>
+<h2 id="AI-之美"><a href="#AI-之美" class="headerlink" title="AI 之美"></a>AI 之美</h2><p>我把这个服务做成了企业微信的 Bot，放到群里，收获了不少 good case，也有 bad case。贴一些结果，让大家感受一下。</p>
+<p><img src="img/WordMan.png" alt="k8s x docker"></p>
+<p>每一条令人大呼卧槽、或者大跌眼镜的运算结果，都蕴含着数学之美，蕴含着数代科学家们潜心研究的心血，更重要的是，这是通过无监督训练得到的。</p>
+<p>作为鹅厂一员，看到公司开源的这份数据，是有那么一丢丢自豪感的。也许在你想不到的地方，就有一枚大学生利用这份数据写出了毕业论文，也许，更为珍贵地——有人受此启发，创造出了更好的语言模型，指出了 NLP 下一个进步的方向，这才是我们的目标和责任所在。</p>
+<p><img src="https://ws2.sinaimg.cn/large/006tNc79gy1g2ge732777j30y00u0466.jpg" alt="WordCalc"></p>
+<p><img src="https://ws3.sinaimg.cn/large/006tNc79gy1g2ge73z6v6j30y00u07ab.jpg" alt="WordCalc"></p>
+<p><img src="https://ws3.sinaimg.cn/large/006tNc79gy1g2ge77esbdj30y00u0aft.jpg" alt="WordCalc"></p>
+<p>AI Lab 的这份词向量数据很赞，<code>马斯克+漫威=钢铁侠</code>、<code>北京-中国+日本=东京</code>，甚至还有 <code>共产主义-中国+美国=法西斯主义</code> 这样提前预定子弹名单的数据，这些都是无监督训练取得的出色成果。</p>
+<h2 id="翻车现场"><a href="#翻车现场" class="headerlink" title="翻车现场"></a>翻车现场</h2><p>之前二葱还做了一个“夸夸机器人”，同样是简单的 TF-IDF 模型、基于 <code>gensim</code> 做的句子相似度计算，加上从豆瓣夸夸小组里爬到的主题/回帖。放到群里至今，二葱已经成为人人喊打的目标=。=</p>
+<p><img src="https://ws4.sinaimg.cn/large/006tNc79gy1g2ge78x8d5j30gi0j7q4q.jpg" alt="WordCalc"></p>
+<p>看样子还有些 good case，对吧？别急……</p>
+<p><img src="https://ws1.sinaimg.cn/large/006tNc79gy1g2ge7cd1dhj30hf0hvmyl.jpg" alt="WordCalc"></p>
+<p><img src="https://ws3.sinaimg.cn/large/006tNc79gy1g2ge7gjo5kj30h80gtmyb.jpg" alt="WordCalc"></p>
+<p><img src="https://ws4.sinaimg.cn/large/006tNc79gy1g2ge7ep6moj30h80hmq4z.jpg" alt="WordCalc"></p>
+<p>路漫漫其修远啊……二葱激动的拍打着自己的轮椅说道</p>
+
+  </div>
+  <div class="post-footer">
+    
+      <ul class="post-tag-list"><li class="post-tag-list-item"><a class="post-tag-list-link" href="/tags/NLP/">NLP</a></li><li class="post-tag-list-item"><a class="post-tag-list-link" href="/tags/Word2Vec/">Word2Vec</a></li><li class="post-tag-list-item"><a class="post-tag-list-link" href="/tags/单词加减计算/">单词加减计算</a></li></ul>
+    
+
+    <a href="#top" class="top">Back to Top</a>
+  </div>
+</article>
+<footer>
+  &copy; 2019
+  <span class="author">
+    二葱
+  </span>
+</footer>
+
+<script src="https://unpkg.com/mermaid@7.1.2/dist/mermaid.min.js"></script>
+<script>
+  if (window.mermaid) {
+    mermaid.initialize({theme: 'forest'});
+  }
+</script>
+
+    </div>
+  </body>
+</html>
