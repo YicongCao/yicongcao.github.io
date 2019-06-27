@@ -136,6 +136,8 @@
 <blockquote>
 <p>—— <a href="https://www.reddit.com/r/golang/comments/ah0w1q/modules_and_local_imports/" target="_blank" rel="noopener">Reddit</a></p>
 </blockquote>
+<h2 id="更新-v2"><a href="#更新-v2" class="headerlink" title="更新 v2"></a>更新 v2</h2><p>常用 go mod 命令：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">go mod tidy //拉取缺少的模块，移除不用的模块。</span><br><span class="line">go mod download //下载依赖包</span><br><span class="line">go mod graph //打印模块依赖图</span><br><span class="line">go mod vendor //将依赖复制到vendor下</span><br><span class="line">go mod verify //校验依赖</span><br><span class="line">go mod why //解释为什么需要依赖</span><br><span class="line">go list -m -json all //依赖详情</span><br></pre></td></tr></table></figure>
 <p>愿原力与你同在。</p>
 
   </div>

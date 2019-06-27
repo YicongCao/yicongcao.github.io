@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+  <!DOCTYPE html>
+<html lang="en">
+
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1">
+  
+  <title>关于云游戏的思考 - 二葱写字的地方</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+  
+  <meta name="keywords" content="云游戏,游戏">
+  
+  
+  <link rel="shortcut icon" type="image/x-icon" href="/images/favicon.png?v=1.02">
+  
+  
+  <link rel="alternate" href="/atom.xml " title="二葱写字的地方" type="application/atom+xml">
+  
+
+  <link rel="stylesheet" href="/css/style.css">
+</head></html>
+  <body>
+    <div class="container">
+      <header class="header">
+  <div class="blog-title">
+    <a href="/" class="logo">二葱写字的地方</a>
+    <div class="subtitle"></div>
+  </div>
+  <nav class="navbar">
+    <ul class="menu">
+      
+        <li class="menu-item">
+          <a href="/" class="menu-item-link">Home</a>
+        </li>
+      
+        <li class="menu-item">
+          <a href="/archives" class="menu-item-link">Archives</a>
+        </li>
+      
+        <li class="menu-item">
+          <a href="/about" class="menu-item-link">About</a>
+        </li>
+      
+    </ul>
+  </nav>
+</header>
+<article class="post">
+  <div class="post-title">
+    <h1 class="article-title">关于云游戏的思考</h1>
+  </div>
+   <div class="post-meta">
+    <span class="post-time">2019-06-27</span>
+  </div>
+  <div class="post-content">
+    <p>在前阵子剧本的 I/O 大会上，Google 宣讲了一些有关游戏话题的内容。包括帮助开发者优化图形渲染管线的 <code>Android Frame Pacing API</code>，帮助玩家试玩游戏的 <code>Google Play Instant</code> 打包方案，以及围绕 Google Play 的一系列帮助游戏开发商提升留存、对比竞品、和预约有礼等功能。</p>
+<p>但是，在这次宣讲的内容中闪耀着光芒、让你不得不注意到技术更迭的，就是谷歌的 Stadia 云游戏。</p>
+<h2 id="传统云游戏的运作方式"><a href="#传统云游戏的运作方式" class="headerlink" title="传统云游戏的运作方式"></a>传统云游戏的运作方式</h2><p>最开始实现“云游戏”概念的方法，通常是在 Windows 上 Hook DirectX 的视频输出，然后实现模拟键盘和鼠标输入功能。实际上是把在客户端运行的 PC 游戏，放到了服务器上运行，这台服务器也必须是 Windows 系统。如果有两个用户的话，也就需要运行两个游戏实例。</p>
+<p><img src="https://ws4.sinaimg.cn/large/006tNc79gy1g4eobhv7s9j30b405maa3.jpg" alt="拦截视频输出"></p>
+<p>这种方法难以优化成本、并且浪费计算资源。但优点是不需要开发商对游戏进行大规模的改动，其在云上运行的适配工作，是云游戏平台完成的。</p>
+<h2 id="Stadia-的创新点"><a href="#Stadia-的创新点" class="headerlink" title="Stadia 的创新点"></a>Stadia 的创新点</h2><p><img src="https://ws1.sinaimg.cn/large/006tNc79gy1g4eo4cr7bgj30xc0m8gms.jpg" alt="Stadia"></p>
+<p>Google Stadia 云游戏的服务器，使用的是定制 Linux 系统，游戏开发者可以使用 Vulkan 图形接口。Google 提供其他输入输出、分发调度的组件，以供游戏开发者使用。</p>
+<p>这种做法需要游戏一开始就要考虑云原生的开发方式，也就意味着需要足够强势、才能推动游戏厂商做出改变。它把游戏开发，从面向客户端平台（OpenBSD、Windows、Android等），变成了面向云计算资源。</p>
+<p>以往游戏跑在每个客户端上，相当于每个客户端都维持着一套游戏的运行状态，所以状态同步帧同步问题，是游戏开发工程师必须要掌握的一项技能。如果基于云原生开发游戏的话，可以在显存中只加载一份模型，然后给予场景里的每个玩家，一个不同的视角（camera）即可。</p>
+<p>也就是说，Stadia 所承诺的云原生游戏开发，不止提供了一套图形接口，而且将会改变游戏逻辑的实现方式。以后的游戏开发工程师，将不得不关心一些后端技术了。</p>
+<h2 id="后端计算的变革之路"><a href="#后端计算的变革之路" class="headerlink" title="后端计算的变革之路"></a>后端计算的变革之路</h2><p>计算机行业发展的最初，是重客户端的。假如你列举出20年前的著名软件，多半是重客户端、甚至是纯客户端逻辑的程序。</p>
+<blockquote>
+<p>ACDSee、网际快车、网络蚂蚁、WinAMP、豪杰超级解霸、KV3000</p>
+</blockquote>
+<p><img src="https://ws2.sinaimg.cn/large/006tNc79gy1g4eo60mxq0j30aq03n0sy.jpg" alt="超级解霸"></p>
+<p>网络兴起之后，通过服务器的作用，成功把众多客户端连接起来。这时诞生了经典的：</p>
+<blockquote>
+<p>MSN、MyIE2、千千静听、暴风影音</p>
+</blockquote>
+<p>还记得那时候千千静听的杀手功能吗——播放一首歌时能直接联机匹配到歌词，还记得那时候的杀毒软件们做出的承诺吗——云查杀，在线检查病毒样本。</p>
+<p><img src="https://ws2.sinaimg.cn/large/006tNc79gy1g4eo6qx8dtj30i608sgmf.jpg" alt="千千静听"></p>
+<p>尤其是 Web 2.0 的横空出世，在 Ajax 加持下，诞生了成功的网络软件：</p>
+<blockquote>
+<p>微博、校内、饭否、豆瓣</p>
+</blockquote>
+<p>后端技术的进步，并没有止步于此。在重客户端的时代，网络所起的只是连接作用——但足以催生出如此流光溢彩的应用，进入 Web 时代后，你只需要浏览器就能使用各式各样的在线服务了。毕竟，浏览器可比客户端轻多了。</p>
+<p><img src="https://ws3.sinaimg.cn/large/006tNc79gy1g4eo7mijzij30mh0hqjtw.jpg" alt="饭否"></p>
+<p>此时，移动互联网爆发了。</p>
+<p>鉴于 Web 存在的局限性、和早期移动设备的性能问题，移动互联网也是从重客户端开始起步的。而云计算的兴起，也是在这个时候，只不过此时移动开发风头正盛，盖过了云计算将预示的变革。</p>
+<p><img src="https://ws3.sinaimg.cn/large/006tNc79gy1g4eodvjxxtj30mi0codgy.jpg" alt="重客户端的App"></p>
+<p>其实后来，App 大厂们也纷纷提出了自家的轻应用方案，比如 Google Instant Apps、百度轻应用、微信小程序。</p>
+<p>还记得最早的云计算所承诺给我们的事情吗？</p>
+<blockquote>
+<p>一次开发，无忧部署，一键操作，随意扩容</p>
+</blockquote>
+<p>很长一段时间里，云计算并没有兑现这个承诺。但是在 2014 年左右，一个叫 <strong>docker</strong> 的程序进入了大家的视线。</p>
+<p><img src="https://ws1.sinaimg.cn/large/006tNc79gy1g4eo85z0ryj30dk07wmxd.jpg" alt="docker"></p>
+<p>有了 docker，再也不需要关心搭建运行环境的问题了，或者说，配环境这件事变成了一次编写、随处复制的了。这为当初许下的承诺，带来了实现的可能。</p>
+<p>故事仍在继续，不久以后，Google 的 kubernetes 开源了。</p>
+<p><img src="https://ws1.sinaimg.cn/large/006tNc79gy1g4eo8lvlsij30ka0atwep.jpg" alt="k8s"></p>
+<p>毕竟在以前，“部署一个后端服务”，实际上就是在服务器——一台普通的电脑上，安装运行时库、然后启动 Web Server 程序。在考虑分布式、考虑扩所容的时候，你不得不想办法来管理这一组服务器上运行的服务程序。而有了 kubernetes 之后，你就不必再操心这些事情了。</p>
+<p>因为 kubernetes 实现的事情，是把具体的一台台机器，抽象成了一种计算资源。部署服务不再是编写脚本、一台机器一台机器地启动服务，而是编写配置文件，将服务程序打包成容器，然后由集群来调度执行。你可以灵活地制定调度策略，来管理你在集群上部署的服务。</p>
+<p>在此基础上，我们可以把 Server 程序也干掉了，把编写后端服务的逻辑，变成编写回掉函数，然后给这个函数注册一个调用入口。这种做法，也就是最近大火的“Serverless”。</p>
+<p><img src="https://ws1.sinaimg.cn/large/006tNc79gy1g4eo9eyrbkj30oh0c90t5.jpg" alt="云函数"></p>
+<p>如此以来，一台一台独立的服务器，已经被抽象成了任你所用的<strong>计算资源</strong>。不论是传统的后端服务、还是模块化的微服务，甚至是某些科学计算任务，诸如图像识别、语音识别，都可以从面向特定机器、特定系统的开发，变成面向计算资源的开发。</p>
+<p>故事先讲到这里。</p>
+<h2 id="关云游戏什么事？"><a href="#关云游戏什么事？" class="headerlink" title="关云游戏什么事？"></a>关云游戏什么事？</h2><p>对啊，这跟游戏有毛线关系啊。</p>
+<p>截至目前，游戏开发中能“上云”的部分，仍然只是游戏的后台服务：将传统的对局服务抽象成无状态的，然后使用云厂商提供的数据服务。</p>
+<p>这是因为目前云所能提供的计算资源，是不包括图形计算的。也许你能买到带 GPU 加速的机器，用来跑机器学习，但在云上开发游戏、并且把渲染画面这件事也在云上完成，困难仍然很多。</p>
+<p>所以，Stadia 所承诺给我们的，就是包含了<strong>图形计算</strong>功能的<strong>计算资源</strong>。</p>
+<p><img src="https://ws4.sinaimg.cn/large/006tNc79gy1g4eoa7cju7j30i206yt8v.jpg" alt=""></p>
+<p>短期内，基于云原生技术开发的游戏可能还是寥寥无几，云游戏技术的主流，仍然是 Hook 端上的音视频输出、然后模拟用户输入，在避免改动游戏的情况下实现一定程度的云游戏。Stadia 自身也不会把全部赌注都押在云原生游戏上面，而是采用两条线并行跑的方式。</p>
+<p>原生云游戏，也许不是今天、也不是明天，但正如长者所说的话：</p>
+<blockquote>
+<p>一個人的命運啊，當然要靠自我奮鬥，但是也要考慮到<em>歷史</em>的行程</p>
+</blockquote>
+<p>对于历史的见证者来说，也就是你和我，最重要的事情，就是锻炼身体、保持健康，要努力活到愿景实现的那一天啊！</p>
+
+  </div>
+  <div class="post-footer">
+    
+      <ul class="post-tag-list"><li class="post-tag-list-item"><a class="post-tag-list-link" href="/tags/云游戏/">云游戏</a></li><li class="post-tag-list-item"><a class="post-tag-list-link" href="/tags/游戏/">游戏</a></li></ul>
+    
+
+    <a href="#top" class="top">Back to Top</a>
+  </div>
+</article>
+<footer>
+  &copy; 2019
+  <span class="author">
+    二葱
+  </span>
+</footer>
+
+<script src="https://unpkg.com/mermaid@7.1.2/dist/mermaid.min.js"></script>
+<script>
+  if (window.mermaid) {
+    mermaid.initialize({theme: 'forest'});
+  }
+</script>
+
+    </div>
+  </body>
+</html>
