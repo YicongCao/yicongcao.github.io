@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en"><head><script>var PixelLocale=(()=>{var c=Object.defineProperty;var p=Object.getOwnPropertyDescriptor;var f=Object.getOwnPropertyNames;var d=Object.prototype.hasOwnProperty;var m=(t,e)=>{for(var r in e)c(t,r,{get:e[r],enumerable:!0})},L=(t,e,r,n)=>{if(e&&typeof e=="object"||typeof e=="function")for(let a of f(e))!d.call(t,a)&&a!==r&&c(t,a,{get:()=>e[a],enumerable:!(n=p(e,a))||n.enumerable});return t};var x=t=>L(c({},"__esModule",{value:!0}),t);var v={};m(v,{languageDestination:()=>s,preferredLanguage:()=>u,startLocale:()=>w});var g="pixelcao.language",l=t=>t==="zh"||t==="en";function u(t=[]){for(let e of t){let r=String(e).toLowerCase().split(/[-_]/)[0];if(l(r))return r}return"en"}function s(t,e,r){let n=new URL(t),a=n.searchParams.get("lang"),h=/^\/en(?:\/|$)/.test(n.pathname),i=l(a)?a:h?"en":l(e)?e:u(r),o=n.pathname.replace(/^\/en(?=\/|$)/,"")||"/";return n.pathname=i==="en"?"/en"+(o.startsWith("/")?o:"/"+o):o,n.pathname==="/en"&&(n.pathname="/en/"),{language:i,url:n.href,explicit:l(a)?a:null}}function w(){let t;try{t=localStorage.getItem(g)}catch{}let e=s(location.href,t,navigator.languages?.length?navigator.languages:[navigator.language]);if(e.explicit)try{localStorage.setItem(g,e.explicit)}catch{}if(e.url!==location.href){window.__cvLocaleRedirecting=!0,location.replace(e.url);return}document.addEventListener("DOMContentLoaded",()=>{let r=()=>{for(let n of document.querySelectorAll("[data-language]")){let a=new URL(location.href);a.searchParams.set("lang",n.dataset.language),n.href=s(a.href,null,[]).url}};r(),window.addEventListener("hashchange",r)},{once:!0})}return x(v);})();
+PixelLocale.startLocale();
+</script><script>// Inline, opt-in local diagnostics. No telemetry requests or persisted identifiers.
+(() => {
+  if (!new URLSearchParams(location.search).has('bootdebug')) return;
+  const marks = [], longTasks = [], visibility = [];
+  const mark = name => marks.push({name, ms: +performance.now().toFixed(1)});
+  window.__cvBootTrace = {mark};
+  mark('head-script');
+  visibility.push({state: document.visibilityState, ms: +performance.now().toFixed(1)});
+  document.addEventListener('visibilitychange', () => {
+    if (visibility.length < 40) visibility.push({state: document.visibilityState, ms: +performance.now().toFixed(1)});
+  });
+  setTimeout(() => mark('head-timer'), 0);
+  requestAnimationFrame(() => mark('head-frame'));
+  try { new PerformanceObserver(list => {
+    for (const e of list.getEntries()) if (longTasks.length < 40) longTasks.push({start: +e.startTime.toFixed(1), duration: +e.duration.toFixed(1)});
+  }).observe({type: 'longtask', buffered: true}); } catch {}
+  document.addEventListener('DOMContentLoaded', () => {
+    mark('dom-ready');
+    const box = document.createElement('details');
+    box.id = 'cv-boot-diagnostics'; box.open = true;
+    box.style.cssText = 'position:fixed;bottom:0;right:0;z-index:2147483647;max-height:38vh;overflow:auto;width:min(640px,95vw);background:#fff;color:#111;font:12px/1.4 monospace;padding:8px;';
+    const summary = document.createElement('summary'); summary.textContent = 'Boot diagnostics (local only)';
+    const pre = document.createElement('pre'); pre.id = 'cv-boot-trace';
+    box.append(summary, pre); document.body.append(box);
+    let count = 0;
+    const render = () => {
+      const nav = performance.getEntriesByType('navigation')[0];
+      const fields = ['startTime','responseStart','responseEnd','domInteractive','domContentLoadedEventEnd','loadEventEnd'];
+      const navigation = Object.fromEntries(fields.map(k => [k, +(nav?.[k] || 0).toFixed(1)]));
+      pre.textContent = JSON.stringify({navigation, marks, visibility, longTasks}, null, 2);
+      if (++count < 180) setTimeout(render, 500);
+    };
+    render();
+  }, {once:true});
+})();
+</script><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#222e32"><title>pixelcao · Portfolio</title><style>/* Inline in the HTML: no font, stylesheet or JS download is needed to paint this screen. */
+html,body{margin:0;background:#222e32}
+#app-shell[inert]{visibility:hidden}
+#site-loader{position:fixed;inset:0;z-index:2147483647;display:grid;place-items:center;box-sizing:border-box;min-height:100svh;padding:32px 24px;background:#222e32;color:#eee6cb;font:16px/1.6 "Ark Pixel",ui-monospace,"PingFang SC",monospace;opacity:1;transition:opacity .16s linear}
+#site-loader[hidden]{display:none}
+#site-loader.leaving{opacity:0;pointer-events:none}
+#site-loader .load-card{width:min(100%,400px)}
+#site-loader .load-traveler{display:block;width:40px;height:50px;margin:0 0 20px;image-rendering:pixelated}
+#site-loader .load-brand{margin:0 0 40px;font:24px/1.2 ui-monospace,monospace;letter-spacing:2px}
+#site-loader .load-sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}
+#site-loader #load-progress{height:12px;border:1px solid #78857d;padding:3px;box-sizing:content-box}
+#site-loader #load-progress>span{display:block;width:0;height:100%;background:#e4b35c}
+#site-loader .load-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+#site-loader[data-phase="error"] .load-actions{margin-top:20px}
+#site-loader a,#site-loader button{display:inline-flex;align-items:center;justify-content:center;min-height:44px;color:#eee6cb;font:inherit;text-underline-offset:5px}
+#site-loader button{padding:8px 16px;border:1px solid #e4b35c;background:transparent;cursor:pointer}
+#site-loader [hidden]{display:none}
+#site-loader svg:not(.load-traveler){width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linejoin:miter}
+#site-loader .load-actions a,#site-loader noscript a{width:44px;border:1px solid #78857d}
+#site-loader :focus-visible{outline:2px solid #e4b35c;outline-offset:5px}
+@media(max-width:600px){#site-loader{padding:24px max(24px,env(safe-area-inset-right)) 24px max(24px,env(safe-area-inset-left))}#site-loader .load-card{max-width:340px}#site-loader .load-brand{margin-bottom:32px}}
+@media(max-height:500px){#site-loader .load-brand{margin-bottom:16px}#site-loader .load-traveler{display:none}}
+@media(prefers-reduced-motion:reduce){#site-loader{transition:none}}
+
+/* Startup recovery remains usable before JavaScript or fonts finish. */
+#site-loader .load-actions{margin-top:20px}
+#site-loader .load-actions a{width:auto;padding:4px 12px;gap:8px;text-decoration:none;font-size:14px}
+#site-loader[data-slow="true"] #load-status,#site-loader[data-phase="error"] #load-status{position:static;width:auto;height:auto;margin:16px 0;overflow:visible;clip-path:none;white-space:normal;font-size:14px}
+.language-switch{display:flex;align-items:center;gap:2px;flex:none;font:14px/1.2 system-ui,sans-serif}.language-switch a{display:grid;place-items:center;min-width:32px;min-height:36px;padding:4px;color:inherit;text-decoration:none;opacity:.6;border-bottom:2px solid transparent}.language-switch a:hover,.language-switch a:focus-visible{opacity:1}.language-switch a[aria-current]{opacity:1;border-color:currentColor}.resume>.language-switch{justify-content:flex-end;margin:-20px 0 12px}@media print{.language-switch{display:none}}@media(max-width:480px){header .language-switch{gap:0;font-size:12px}header .language-switch a{min-width:28px;min-height:44px;padding:2px}header .brand{width:auto;min-width:0;flex:1}header .resume-link{min-width:0}header #open-gallery,header .sound-toggle{width:36px;min-width:36px;padding:9px}.resume>.language-switch{margin:-12px 0 16px}}</style><style>
+header .site-brand-group{display:flex;flex:1 1 auto;min-width:0;flex-direction:column;align-items:flex-start}
+header .site-brand-group .brand{width:116px;max-width:100%;min-width:0;min-height:34px;flex:none;margin:0}
+.site-brand-group .brand svg{max-width:100%;height:auto}
+.old-blog-link{display:inline-flex;align-items:center;min-height:24px;color:#e5d5b4;font:12px/1.25 system-ui,sans-serif;white-space:nowrap;text-underline-offset:3px}
+.old-blog-link:hover,.old-blog-link:focus-visible{color:#f5c773;text-decoration:underline}
+@media(max-width:850px){header .site-brand-group .brand{width:100px;min-height:29px}.old-blog-link{font-size:11px;min-height:22px}}
+</style>
+</head>
+<body>
+<section id="site-loader" aria-label="Loading the portfolio" data-phase="download">
+  <div class="load-card">
+    <svg class="load-traveler" viewBox="0 0 32 40" aria-hidden="true" shape-rendering="crispEdges"><path fill="#eee6cb" d="M14 1h4v4h2v6h3v7H9v-7h3V5h2zM5 18h22v3H5zM10 27h12v4h3v5H7v-5h3z"/><path fill="#35474c" d="M10 21h12v6H10zM10 36h5v4h-5zm7 0h5v4h-5z"/><path fill="#e4b35c" d="M12 23h2v2h-2zm6 0h2v2h-2z"/></svg>
+    <p class="load-brand">pixelcao</p>
+    <p id="load-status" class="load-sr-only" role="status" aria-live="polite">Loading exhibition resources</p>
+    <div id="load-progress" role="progressbar" aria-label="Exhibition loading progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span></span></div>
+    <div class="load-actions"><button id="load-retry" type="button" aria-label="Reload" hidden><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M13 6A5 5 0 1 0 13 10M13 2v4H9"/></svg></button><a id="load-resume" href="/en/resume/" aria-label="View resume">View resume <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 1h7l3 3v11H3zM10 1v4h3M5 8h6M5 11h6"/></svg></a></div>
+    <noscript><a href="/en/resume/" aria-label="View resume"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 1h7l3 3v11H3zM10 1v4h3M5 8h6M5 11h6"/></svg></a></noscript>
+  </div>
+</section>
+<div id="app-shell" inert aria-busy="true">
+<header><div class="site-brand-group"><button class="brand" type="button" aria-label="About pixelcao" aria-haspopup="dialog">pixelcao</button><a class="old-blog-link" href="/old-blog/">Old blog · Archived</a></div><button id="overview" hidden aria-label="Overview">Overview</button><button id="open-gallery" aria-label="Project Gallery" aria-haspopup="dialog"><svg viewBox="0 0 16 16" aria-hidden="true" shape-rendering="crispEdges"><path fill="currentColor" d="M0 0h7v7H0zm9 0h7v7H9zM0 9h7v7H0zm9 0h7v7H9z"/></svg></button><button class="sound-toggle" data-sound-toggle type="button" aria-label="Mute sound" aria-pressed="true"></button><a class="resume-link" href="/en/resume/" target="_blank" rel="noopener">Resume <span aria-hidden="true">↗</span></a><nav class="language-switch" aria-label="Language"><a href="/?lang=zh" data-language="zh" lang="zh-CN" hreflang="zh-CN">中</a><a href="/en/?lang=en" data-language="en" lang="en" hreflang="en" aria-current="true">EN</a></nav></header>
+<main><section id="timeline" aria-label="Project exhibition">
+<div class="intro"><h1 id="title" tabindex="0" role="button" aria-label="Visit the selected project"></h1><p id="summary"></p><button class="dark" id="explore">View project <span aria-hidden="true">↗</span></button><ul id="project-topics" aria-label="Project sections"></ul></div>
+<div id="stage" tabindex="0" aria-label="Project islands: select a theme to explore or a project to visit"><div id="cards"></div></div>
+<div class="map-controls" hidden><button data-zoom="1.25" aria-label="Zoom in">+</button><button data-zoom="0.8" aria-label="Zoom out">−</button></div>
+<div class="browse"><button id="previous" aria-label="Previous project">←</button><button id="next" aria-label="Next project">→</button></div>
+
+</section></main>
+<dialog id="major-gallery" aria-labelledby="gallery-title"><div class="gallery-header"><h1 id="gallery-title">Project Gallery</h1><button data-gallery-close aria-label="Back to exhibition">Back to exhibition <span aria-hidden="true">×</span></button></div><div class="gallery-timeline"></div></dialog>
+<dialog id="gallery-preview" aria-label="Gallery image"><button data-preview-close aria-label="Close gallery image">×</button><button data-preview-prev aria-label="Previous gallery image">←</button><img alt=""><button data-preview-next aria-label="Next gallery image">→</button><a target="_blank" rel="noopener">Open original image ↗</a></dialog>
+<dialog id="detail" aria-labelledby="detail-title"><button class="sound-toggle" data-sound-toggle type="button" aria-label="Mute sound" aria-pressed="true"></button><button id="close-detail" class="close" aria-label="Close project details">×</button><div class="detail-layout"><div class="media-column"><div id="media" class="main-media"></div><div class="media-toolbar"><button id="expand" aria-label="Expand selected media">⤢</button></div></div><div class="detail-copy"><p id="detail-period"></p><h2 id="detail-title"></h2><div class="red-rule"></div><p id="detail-summary"></p><section id="rally-download" class="rally-download" hidden><a id="rally-client-link" class="demo-shortcut rally-client" href="https://github.com/YicongCao/Brushline-Rally/releases/tag/v0.5.0" target="_blank" rel="noopener" aria-describedby="rally-experience-note"><svg class="rally-download-icon" viewBox="0 0 16 16" aria-hidden="true" shape-rendering="crispEdges"><path d="M6 1h4v6h3l-5 5-5-5h3zM1 12h3v2h8v-2h3v4H1z" fill="currentColor"/></svg><strong>Windows / Mac download</strong><svg class="demo-launch-arrow" viewBox="0 0 16 16" aria-hidden="true" shape-rendering="crispEdges"><path d="M4 2h10v10h-3V7l-8 8-2-2 8-8H4z" fill="currentColor"/></svg></a><p id="rally-experience-note">The desktop version offers a better experience. Resource loading and WebGL performance may limit the web demo.</p></section><a id="demo-link" class="demo-shortcut" target="_blank" rel="noopener" hidden><span class="demo-thumb"><img alt="" width="128" height="88" loading="lazy" decoding="async"><svg class="demo-shortcut-badge" viewBox="0 0 16 16" aria-hidden="true" shape-rendering="crispEdges"><path d="M2 14V8h6V5H5V2h9v9h-3V8H8v3H5v3z" fill="currentColor"/></svg></span><span class="demo-shortcut-copy"><strong data-demo-action></strong><span data-demo-host></span></span><svg class="demo-launch-arrow" viewBox="0 0 16 16" aria-hidden="true" shape-rendering="crispEdges"><path d="M4 2h10v10h-3V7l-8 8-2-2 8-8H4z" fill="currentColor"/></svg></a><p id="ownership" hidden></p><div id="workflow" hidden></div><h3>My contribution</h3><ul id="contributions"></ul></div></div></dialog>
+<dialog id="demo-device-notice" aria-labelledby="demo-notice-title" aria-describedby="demo-notice-description"><p data-demo-name></p><h2 id="demo-notice-title">Best on a desktop</h2><p id="demo-notice-description">This project works best with a large screen and a keyboard. You can still continue on this device.</p><div class="demo-notice-actions"><button type="button" data-demo-cancel>Not now</button><a data-demo-continue target="_blank" rel="noopener">Continue <span aria-hidden="true">↗</span></a></div></dialog>
+<dialog id="lightbox" aria-label="Expanded media"><button class="sound-toggle" data-sound-toggle type="button" aria-label="Mute sound" aria-pressed="true"></button><button id="close-lightbox" class="close" aria-label="Close expanded media">×</button><div id="large-media"></div><div class="large-nav"><button id="large-prev" aria-label="Previous media">←</button><button id="large-next" aria-label="Next media">→</button></div><a id="original-link" target="_blank" rel="noopener">Open original image ↗</a></dialog>
+<dialog id="about" aria-labelledby="about-title"><button class="sound-toggle" data-sound-toggle type="button" aria-label="Mute sound" aria-pressed="true"></button><button id="close-about" class="close" aria-label="Close profile">×</button><div id="about-content"></div></dialog>
+<noscript><p>Enable JavaScript to explore the exhibition, or <a href="/en/resume/">view the full resume</a>。</p></noscript>
+</div>
+<script>var PixelBoot=(()=>{var T=Object.defineProperty;var R=Object.getOwnPropertyDescriptor;var $=Object.getOwnPropertyNames;var D=Object.prototype.hasOwnProperty;var O=(s,e)=>{for(var r in e)T(s,r,{get:e[r],enumerable:!0})},q=(s,e,r,o)=>{if(e&&typeof e=="object"||typeof e=="function")for(let n of $(e))!D.call(s,n)&&n!==r&&T(s,n,{get:()=>e[n],enumerable:!(o=R(e,n))||o.enumerable});return s};var z=s=>q(T({},"__esModule",{value:!0}),s);var N={};O(N,{readResource:()=>k,startBoot:()=>J});async function k(s,{fetcher:e=fetch,signal:r,onProgress:o=()=>{}}={}){let n=await e(s,{signal:r});if(!n.ok)throw new Error(`Resource ${n.status}: ${s}`);if(!n.body){let a=new Uint8Array(await n.arrayBuffer());return o(a.length),a}let u=n.body.getReader(),p=[],d=0;try{for(;;){let{done:a,value:i}=await u.read();if(a)break;p.push(i),d+=i.length,o(d)}}finally{u.releaseLock()}let m=new Uint8Array(d),h=0;for(let a of p)m.set(a,h),h+=a.length;return m}function J(s){let e=t=>window.__cvBootTrace?.mark(t);e("boot-enter");let r=t=>document.getElementById(t),o=r("site-loader"),n=r("app-shell"),u=s.filter(t=>t.id!=="font"),p=new AbortController,d=new AbortController,m=new Map,h=u.reduce((t,l)=>t+l.size,0),a=!1,i=!1,y=0,w=(t,l)=>{y=Math.max(y,Math.min(100,Math.floor(t))),r("load-progress").setAttribute("aria-valuenow",String(y)),r("load-progress").firstElementChild.style.width=`${y}%`,l&&(r("load-status").textContent=l)},M=setTimeout(()=>{!a&&!i&&(o.dataset.slow="true",r("load-status").textContent="Still loading. You can wait, or open the resume now.",e("slow-notice"))},5e3),b;function v(){clearTimeout(b),!a&&!i&&!document.hidden&&(b=setTimeout(()=>g(new Error("Startup timed out")),45e3))}document.addEventListener?.("visibilitychange",v),v();function C(){clearTimeout(M),clearTimeout(b),document.removeEventListener?.("visibilitychange",v),removeEventListener("error",A)}function g(t){a||i||(i=!0,p.abort(),d.abort(),C(),o.dataset.phase="error",e("boot-error"),r("load-status").textContent="Loading was interrupted. Retry or view the resume.",r("load-retry").hidden=!1,r("load-resume").hidden=!1,console.error("Portfolio startup:",t))}function A(t){t.error&&g(t.error)}addEventListener("error",A),r("load-retry").onclick=()=>location.reload();let x=window.portfolioBoot={data:null,gallery:null,fail:g,async complete(){return a?!0:i?!1:(a=!0,C(),w(100,"The exhibition is ready"),o.dataset.phase="ready",e("scene-ready"),n.inert=!1,n.setAttribute("aria-busy","false"),o.contains(document.activeElement)&&document.querySelector(".brand")?.focus({preventScroll:!0}),o.classList.add("leaving"),setTimeout(()=>{o.hidden=!0,e("loader-hidden")},matchMedia("(prefers-reduced-motion: reduce)").matches?0:160),!0)}};(async()=>{try{e("fetch-start");let t=await Promise.all(u.map(c=>k(c.url,{signal:p.signal,onProgress:E=>{i||a||(m.set(c.id,Math.min(E,c.size)),w(92*[...m.values()].reduce((F,P)=>F+P,0)/h))}})));if(e("resources-ready"),i)return;let l=Object.fromEntries(u.map((c,E)=>[c.id,t[E]])),f=c=>new TextDecoder().decode(c);w(94,"Preparing the portfolio"),o.dataset.phase="prepare",x.data=JSON.parse(f(l.data)),x.gallery=JSON.parse(f(l.gallery));let S=document.createElement("style");if(S.textContent=f(l.style),document.head.append(S),i)return;w(97,"Building the exhibition"),o.dataset.phase="render",e("app-execute");let B=document.createElement("script");B.textContent=f(l.app),document.body.append(B)}catch(t){g(t)}})();let L=s.find(t=>t.id==="font");if(L&&typeof FontFace<"u"){let t=setTimeout(()=>d.abort(),8e3);(async()=>{try{let l=await k(L.url,{signal:d.signal}),f=await new FontFace("Ark Pixel",l,{weight:"400",style:"normal",display:"swap"}).load();!i&&!d.signal.aborted&&(document.fonts.add(f),e("font-ready"))}catch{e("font-fallback")}finally{clearTimeout(t)}})()}return x}return z(N);})();
+if(!window.__cvLocaleRedirecting)PixelBoot.startBoot([{"id":"app","url":"/en/app.edd9b84d969f.js?v=edd9b84d969f","size":655061},{"id":"style","url":"/en/style.db6013d0952e.css?v=db6013d0952e","size":53144},{"id":"data","url":"/en/data/portfolio.json?v=d09927f618f4","size":120296},{"id":"gallery","url":"/en/data/gallery.json?v=3bc438b58620","size":16766},{"id":"font","url":"/fonts/ark-pixel/ark-pixel-12px-proportional-zh_hans.otf.subset.41eecea79a46.woff2?v=41eecea79a46","size":25864}]);
+</script>
+</body></html>

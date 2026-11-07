@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><script>var PixelLocale=(()=>{var c=Object.defineProperty;var p=Object.getOwnPropertyDescriptor;var f=Object.getOwnPropertyNames;var d=Object.prototype.hasOwnProperty;var m=(t,e)=>{for(var r in e)c(t,r,{get:e[r],enumerable:!0})},L=(t,e,r,n)=>{if(e&&typeof e=="object"||typeof e=="function")for(let a of f(e))!d.call(t,a)&&a!==r&&c(t,a,{get:()=>e[a],enumerable:!(n=p(e,a))||n.enumerable});return t};var x=t=>L(c({},"__esModule",{value:!0}),t);var v={};m(v,{languageDestination:()=>s,preferredLanguage:()=>u,startLocale:()=>w});var g="pixelcao.language",l=t=>t==="zh"||t==="en";function u(t=[]){for(let e of t){let r=String(e).toLowerCase().split(/[-_]/)[0];if(l(r))return r}return"en"}function s(t,e,r){let n=new URL(t),a=n.searchParams.get("lang"),h=/^\/en(?:\/|$)/.test(n.pathname),i=l(a)?a:h?"en":l(e)?e:u(r),o=n.pathname.replace(/^\/en(?=\/|$)/,"")||"/";return n.pathname=i==="en"?"/en"+(o.startsWith("/")?o:"/"+o):o,n.pathname==="/en"&&(n.pathname="/en/"),{language:i,url:n.href,explicit:l(a)?a:null}}function w(){let t;try{t=localStorage.getItem(g)}catch{}let e=s(location.href,t,navigator.languages?.length?navigator.languages:[navigator.language]);if(e.explicit)try{localStorage.setItem(g,e.explicit)}catch{}if(e.url!==location.href){window.__cvLocaleRedirecting=!0,location.replace(e.url);return}document.addEventListener("DOMContentLoaded",()=>{let r=()=>{for(let n of document.querySelectorAll("[data-language]")){let a=new URL(location.href);a.searchParams.set("lang",n.dataset.language),n.href=s(a.href,null,[]).url}};r(),window.addEventListener("hashchange",r)},{once:!0})}return x(v);})();
+PixelLocale.startLocale();
+</script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Yicong CaoResume">
+  <title>Yicong Cao｜Resume</title>
+  <style>
+    :root {
+      --ink: #172033;
+      --muted: #647085;
+      --primary: #2457d6;
+      --primary-soft: #eef3ff;
+      --line: #dfe5ef;
+      --paper: #ffffff;
+      --page: #edf1f7;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--page);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+        "Hiragino Sans GB", "Microsoft YaHei", Arial, sans-serif;
+      font-size: 14px;
+      line-height: 1.72;
+    }
+
+    a {
+      color: var(--primary);
+      text-decoration: none;
+      overflow-wrap: anywhere;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    .resume {
+      width: min(1220px, calc(100% - 48px));
+      margin: 32px auto;
+      padding: 46px 54px 56px;
+      background: var(--paper);
+      border-top: 6px solid var(--primary);
+      border-radius: 8px;
+      box-shadow: 0 16px 48px rgba(26, 39, 68, 0.12);
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 30px;
+      align-items: end;
+      padding-bottom: 28px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 36px;
+      line-height: 1.2;
+      letter-spacing: 0.08em;
+    }
+
+    .headline {
+      margin: 8px 0 0;
+      color: var(--primary);
+      font-size: 17px;
+      font-weight: 650;
+    }
+
+    .contact {
+      display: grid;
+      grid-template-columns: auto auto;
+      gap: 4px 22px;
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .contact dt {
+      color: var(--ink);
+      font-weight: 650;
+    }
+
+    .contact dd {
+      margin: 0;
+    }
+
+    .contact .portfolio-link {
+      color: var(--primary);
+      font-weight: 650;
+    }
+
+    section {
+      margin-top: 30px;
+    }
+
+    h2 {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 0 0 16px;
+      color: var(--primary);
+      font-size: 18px;
+      line-height: 1.4;
+      letter-spacing: 0.08em;
+    }
+
+    h2::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: var(--line);
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+      gap: 18px;
+    }
+
+    .card {
+      padding: 16px 18px;
+      background: #f8faff;
+      border: 1px solid #e7ecf5;
+      border-radius: 6px;
+    }
+
+    .card > strong {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--ink);
+    }
+
+    .card p {
+      margin: 0;
+      color: var(--muted);
+    }
+
+    .education-line {
+      white-space: normal;
+    }
+
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-top: 10px;
+    }
+
+    .tag {
+      padding: 2px 6px;
+      color: #244a9f;
+      background: var(--primary-soft);
+      border-radius: 999px;
+      font-size: 11px;
+      white-space: nowrap;
+    }
+
+    .vibe-section { padding: 16px; border: 1px solid #d9def0; border-left: 4px solid #7462bc; border-radius: 8px; background: linear-gradient(135deg, #f5f3fc, #f3f7ff); }
+    .vibe-section h2 { color: #6552a8; margin-bottom: 12px; }
+    .vibe-spark { width: 20px; height: 20px; flex: none; fill: currentColor; }
+    .vibe-grid { display: grid; gap: 8px; }
+    .vibe-card { display: grid; grid-template-columns: minmax(0, 1fr) 200px; gap: 3px 16px; min-width: 0; padding: 10px 12px; border: 1px solid #dfe3ed; border-radius: 6px; background: white; break-inside: avoid; }
+    .vibe-header { grid-column: 1; display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 12px; }
+    .vibe-card h3 { margin: 0; font-size: 18px; line-height: 1.4; }
+    .vibe-card .period { font-size: 12px; color: #7462bc; }
+    .vibe-summary { grid-column: 1; margin: 0 0 4px; font-size: 13px; color: var(--muted); }
+    .vibe-card .work-shot { grid-column: 2; grid-row: 1 / 4; align-self: center; margin: 0; }
+    .vibe-card .shot-link { background: #111; border-radius: 4px; }
+    .vibe-card img { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; object-fit: contain; }
+    .vibe-points { grid-column: 1; margin: 0; padding: 0; list-style: none; font-size: 13px; }
+    .vibe-points li { margin: 0 0 5px; }
+    .vibe-points li:last-child { margin-bottom: 0; }
+    .vibe-points strong { color: #4f4388; }
+    @media screen and (max-width: 800px) {
+      .vibe-section { padding: 14px; }
+      .vibe-card { display: block; padding: 12px; }
+      .vibe-summary { margin: 6px 0 10px; }
+      .vibe-card .work-shot { margin-bottom: 10px; }
+    }
+    @media print {
+      .vibe-section { padding: 7px; break-inside: auto; background: #faf9fe; }
+      .vibe-section h2 { margin-bottom: 8px; }
+      .vibe-grid { grid-template-columns: minmax(0, 1fr); gap: 5px; }
+      .vibe-card { grid-template-columns: minmax(0, 1fr) 100px; gap: 2px 10px; padding: 6px 8px; }
+      .vibe-card h3 { font-size: 11pt; }
+      .vibe-summary, .vibe-points, .vibe-card .period { font-size: 8pt; }
+      .vibe-card .work-shot { margin: 0; }
+      .vibe-points li { margin-bottom: 3px; }
+    }
+
+    .experience-heading {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 310px;
+      gap: 56px;
+      align-items: baseline;
+      margin-bottom: 22px;
+    }
+
+    .experience-heading h2 { margin: 0; }
+    .gallery-heading { margin: 0; color: var(--muted); font-size: 12px; }
+    .gallery-heading strong { color: var(--primary); font-weight: 650; margin-right: 10px; }
+    .timeline { position: relative; }
+    .timeline::before {
+      content: "";
+      position: absolute;
+      top: 8px;
+      bottom: 0;
+      right: 334px;
+      width: 1px;
+      background: var(--line);
+    }
+
+    .project {
+      position: relative;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 310px;
+      gap: 56px;
+      padding-bottom: 38px;
+      break-inside: avoid;
+    }
+
+    .project:last-child { padding-bottom: 0; }
+    .project-content { min-width: 0; }
+    .project-summary { margin: 0 0 12px; color: var(--muted); font-size: 13px; }
+    .project-visual { position: relative; min-width: 0; }
+    .project-visual::before {
+      content: "";
+      position: absolute;
+      top: 6px;
+      left: -30px;
+      width: 11px;
+      height: 11px;
+      background: var(--paper);
+      border: 2px solid var(--primary);
+      border-radius: 50%;
+    }
+    .work-shot { margin: 0 0 18px; }
+    .work-shot:last-child { margin-bottom: 0; }
+    .shot-link {
+      display: block;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: #f5f7fb;
+      cursor: zoom-in;
+      transition: border-color .18s, box-shadow .18s;
+    }
+    .shot-link:hover { border-color: #91adeb; box-shadow: 0 5px 18px #17203312; }
+    .shot-link:focus-visible { outline: 3px solid var(--primary); outline-offset: 4px; }
+    .work-shot img { display: block; width: 100%; height: auto; }
+    .work-shot.portrait img { height: 270px; object-fit: contain; }
+    .work-shot figcaption { margin: 0 0 12px; color: var(--primary); font-size: 12px; font-weight: 650; }
+    .image-viewer {
+      max-width: min(1200px, calc(100vw - 32px));
+      max-height: calc(100dvh - 32px);
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--paper);
+      color: var(--ink);
+    }
+    .image-viewer::backdrop { background: rgb(13 22 39 / .8); }
+    .viewer-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 20px; margin-bottom: 12px; }
+    .viewer-toolbar p { margin: 0; font-size: 13px; }
+    .viewer-close { flex: none; padding: 8px 14px; border: 1px solid var(--line); border-radius: 6px; background: white; color: var(--ink); cursor: pointer; font: inherit; }
+    .viewer-image { display: block; max-width: 100%; max-height: calc(100dvh - 150px); width: auto; height: auto; margin: auto; object-fit: contain; }
+    body:has(.image-viewer[open]) { overflow: hidden; }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      .shot-link { transition: none; }
+    }
+    @media screen and (max-width: 1050px) {
+      .resume { padding: 36px; }
+      .experience-heading, .project { grid-template-columns: minmax(0, 1fr) 250px; gap: 40px; }
+      .timeline::before { right: 269px; }
+      .project-visual::before { left: -25px; }
+      .project-header { flex-wrap: wrap; gap: 2px 14px; }
+    }
+    @media screen and (max-width: 800px) {
+      .experience-heading { display: block; }
+      .gallery-heading { margin-top: 8px; }
+      .timeline::before { left: 5px; right: auto; }
+      .project { grid-template-columns: minmax(0, 1fr); gap: 16px; padding-left: 26px; }
+      .project-visual { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+      .project-visual::before { display: none; }
+      .project::before { content: ""; position: absolute; left: 0; top: 7px; width: 11px; height: 11px; border: 2px solid var(--primary); border-radius: 50%; background: white; }
+        .work-shot { margin: 0; }
+      .project-visual:empty { display: none; }
+      .project-visual.no-images { display: none; }
+      .project-visual.single-shot { grid-template-columns: minmax(0, 1fr); max-width: 420px; }
+      .hero, .summary-grid { grid-template-columns: minmax(0, 1fr); }
+      .hero { gap: 20px; }
+    }
+    @media screen and (max-width: 480px) {
+      .project-visual { grid-template-columns: minmax(0, 1fr); }
+      .contact { gap: 4px 12px; grid-template-columns: auto minmax(0, 1fr); }
+    }
+
+    .project-header {
+      display: flex;
+      gap: 16px;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: 6px;
+    }
+
+    .project h3 {
+      margin: 0;
+      font-size: 16px;
+      line-height: 1.5;
+    }
+
+    .period {
+      flex: none;
+      color: var(--primary);
+      font-size: 13px;
+      font-weight: 650;
+    }
+
+    ul {
+      margin: 6px 0 0;
+      padding-left: 1.35em;
+    }
+
+    li {
+      margin: 3px 0;
+    }
+
+    li::marker {
+      color: var(--primary);
+    }
+
+    .cert-list {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px 24px;
+      margin: 0;
+    }
+
+    .cert-list li {
+      break-inside: avoid;
+    }
+
+    .footer {
+      margin-top: 34px;
+      padding-top: 14px;
+      color: #8a93a3;
+      border-top: 1px solid var(--line);
+      font-size: 11px;
+      text-align: center;
+    }
+
+    @media screen and (max-width: 700px) {
+      .resume {
+        width: 100%;
+        margin: 0;
+        padding: 30px 22px 40px;
+        border-radius: 0;
+      }
+
+      .hero,
+      .summary-grid {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      .hero {
+        gap: 18px;
+        align-items: start;
+      }
+
+      .project-header {
+        display: block;
+      }
+
+      .period {
+        display: block;
+        margin-top: 2px;
+      }
+
+      .cert-list {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+
+    @media print {
+      @page {
+        size: A4;
+        margin: 9mm;
+      }
+
+      body {
+        background: #fff;
+        font-size: 9pt;
+        line-height: 1.48;
+      }
+
+      .resume {
+        width: auto;
+        margin: 0;
+        padding: 0;
+        border-top: 4px solid var(--primary);
+        border-radius: 0;
+        box-shadow: none;
+      }
+
+      .hero {
+        padding: 14px 22px 11px;
+      }
+
+      .resume > section,
+      .footer {
+        margin-right: 22px;
+        margin-left: 22px;
+      }
+
+      section {
+        margin-top: 12px;
+      }
+
+      .project { grid-template-columns: minmax(0, 1fr) 190px; gap: 30px; padding-bottom: 12px; }
+      .project-summary { margin-bottom: 8px; }
+      .experience-heading { grid-template-columns: minmax(0, 1fr) 190px; gap: 30px; break-after: avoid; }
+      .timeline { break-before: avoid; }
+      .timeline::before { right: 204px; }
+      .project-visual::before { left: -20px; }
+      .project .work-shot img { max-height: 128px; object-fit: contain; }
+      .work-shot.portrait img { height: 128px; }
+      .work-shot figcaption { margin-bottom: 8px; }
+      h2 { break-after: avoid; }
+      .cert-list { break-inside: avoid; }
+      .footer { margin-top: 18px; padding-top: 10px; }
+      .gallery-heading, .image-viewer { display: none; }
+
+      .card {
+        padding: 11px 14px;
+      }
+
+      h2 {
+        margin-bottom: 8px;
+      }
+
+      ul {
+        margin-top: 3px;
+      }
+
+      a {
+        color: inherit;
+      }
+    }
+  </style>
+<style>.language-switch{display:flex;align-items:center;gap:2px;flex:none;font:14px/1.2 system-ui,sans-serif}.language-switch a{display:grid;place-items:center;min-width:32px;min-height:36px;padding:4px;color:inherit;text-decoration:none;opacity:.6;border-bottom:2px solid transparent}.language-switch a:hover,.language-switch a:focus-visible{opacity:1}.language-switch a[aria-current]{opacity:1;border-color:currentColor}.resume>.language-switch{justify-content:flex-end;margin:-20px 0 12px}@media print{.language-switch{display:none}}@media(max-width:480px){header .language-switch{gap:0;font-size:12px}header .language-switch a{min-width:28px;min-height:44px;padding:2px}header .brand{width:auto;min-width:0;flex:1}header .resume-link{min-width:0}header #open-gallery,header .sound-toggle{width:36px;min-width:36px;padding:9px}.resume>.language-switch{margin:-12px 0 16px}}</style></head>
+<body>
+  <main class="resume"><nav class="language-switch" aria-label="Language"><a href="/resume/?lang=zh" data-language="zh" lang="zh-CN" hreflang="zh-CN">中</a><a href="/en/resume/?lang=en" data-language="en" lang="en" hreflang="en" aria-current="true">EN</a></nav>
+    <header class="hero">
+      <div>
+        <h1>Yicong Cao</h1>
+        <p class="headline">T10 Engineer · Joined Tencent on July 24, 2016</p>
+      </div>
+      <dl class="contact" aria-label="Contact details">
+        <dt>Personal details</dt>
+        <dd>Male · Age 32</dd>
+        <dt>WeCom</dt>
+        <dd>pixelcao</dd>
+        <dt>Phone</dt>
+        <dd><a href="tel:18126045570">18126045570</a></dd>
+        <dt>GitHub</dt>
+        <dd><a href="https://github.com/yicongcao">github.com/yicongcao</a></dd>
+        <dt>Online portfolio</dt>
+        <dd><a class="portfolio-link" href="https://cv.yicong.me">cv.yicong.me <span aria-hidden="true">↗</span></a></dd>
+      </dl>
+    </header>
+
+    <section aria-labelledby="profile-title">
+      <h2 id="profile-title">Profile</h2>
+      <div class="summary-grid">
+        <div class="card">
+          <strong>Education</strong>
+          <p class="education-line"><strong>Xidian University</strong> · <strong>Intelligent Science and Technology</strong></p>
+          <p>Coursework: Introduction to Artificial Intelligence, Pattern Recognition, Machine Learning, Natural Language Processing and more.</p>
+        </div>
+        <div class="card">
+          <strong>Technical focus</strong>
+          <p>Engineering experience in agents, multiplayer backends (matchmaking and dedicated server hosting), chatbots, P2P connectivity and Windows LSP network proxies.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="vibe-section" aria-labelledby="vibe-title">
+      <h2 id="vibe-title"><svg class="vibe-spark" viewBox="0 0 20 20" aria-hidden="true"><path d="M8 0h4v5h3v3h5v4h-5v3h-3v5H8v-5H5v-3H0V8h5V5h3z"/></svg>Vibe Coding Projects</h2>
+      <div class="vibe-grid">
+        <article class="vibe-card" id="project-no-art-fps">
+          <div class="vibe-header"><h3>No-Art-FPS</h3><span class="period">2026/11 — Present</span></div>
+          <p class="vibe-summary">A bright low-poly FPS in 60-second rounds · <a href="https://yicongcao.github.io/No-Art-FPS/" target="_blank" rel="noopener noreferrer">Play online</a> · <a href="https://cv-assets.yicong.me/releases/20261106-v2/media/originals/videos/a266.mp4" target="_blank" rel="noopener noreferrer">30-second gameplay demo</a></p>
+          <figure class="work-shot"><a class="shot-link" href="https://cv-assets.yicong.me/releases/20261106-v2/resume/resources/assets/gallery/vibe-no-art-fps.png" data-lightbox aria-label="No-Art-FPS · Bright low-poly arena"><img src="https://cv-assets.yicong.me/releases/20261106-v2/resume/resources/assets/gallery/vibe-no-art-fps.png" width="1280" height="720" alt="Original graffiti and a cobalt-blue weapon in No-Art-FPS" decoding="async"></a></figure>
+          <ul class="vibe-points">
+            <li><strong>Art and gameplay: </strong>Unified bold colors, comic outlines and a minimal HUD; shaped short rounds with escalating enemies, kill-streak feedback and an explosive finish.</li>
+            <li><strong>Rapid iteration: </strong>Used Godot and editable Blender assets, collaborating with Codex to refine reloading, obstacle avoidance and level flow, then deliver a browser demo.</li>
+          </ul>
+        </article>
+        <article class="vibe-card" id="project-photomuseum">
+          <div class="vibe-header"><h3>PhotoMuseum</h3><span class="period">2026/10 — Present</span></div>
+          <p class="vibe-summary">Turn a personal photo library into a searchable, explorable spatial exhibition.</p>
+          <figure class="work-shot"><a class="shot-link" href="https://cv-assets.yicong.me/releases/20261030-v4/resume/resources/assets/gallery/vibe-photomuseum.jpg" data-lightbox aria-label="PhotoMuseum · Spatial photo gallery"><img src="https://cv-assets.yicong.me/releases/20261030-v4/resume/resources/assets/gallery/vibe-photomuseum.jpg" width="1280" height="720" alt="PhotoMuseum Cover Flow gallery" decoding="async"></a></figure>
+          <ul class="vibe-points">
+            <li><strong>Product and AI architecture: </strong>Combined Python, React and SQLite for local search and tool-bound AI curation, with read-only NAS access, privacy boundaries and on-demand loading.</li>
+            <li><strong>Interaction and iteration: </strong>Designed Cover Flow, calendar, map and spatial galleries; improved the experience with reversible people confirmation, interaction regression checks and recordings.</li>
+          </ul>
+        </article>
+        <article class="vibe-card" id="project-brushline-rally">
+          <div class="vibe-header"><h3>Brushline Rally</h3><span class="period">2026/10 — Present</span></div>
+          <p class="vibe-summary">Evolved a driving prototype into an offline rally game with a consistent visual style.</p>
+          <figure class="work-shot"><a class="shot-link" href="https://cv-assets.yicong.me/releases/20261030-v4/resume/resources/assets/gallery/vibe-brushline-rally.jpg" data-lightbox aria-label="Brushline Rally · Rally demo"><img src="https://cv-assets.yicong.me/releases/20261030-v4/resume/resources/assets/gallery/vibe-brushline-rally.jpg" width="1280" height="720" alt="Brushline Rally cars, tracks and driving HUD" decoding="async"></a></figure>
+          <ul class="vibe-points">
+            <li><strong>Engineering and art: </strong>Tuned driving in Godot, GDScript and Jolt, connecting Blender assets, screen-print styling, menus and the HUD.</li>
+            <li><strong>AI collaboration and validation: </strong>Set milestones from the driving prototype, validated with input replay, vehicle telemetry and regression scenarios, then shipped playable builds.</li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
+    <section aria-labelledby="experience-title">
+      <div class="experience-heading">
+        <h2 id="experience-title">Project Experience</h2>
+      </div>
+      <div class="timeline">
+        <article class="project" id="project-nex">
+          <div class="project-content">
+          <div class="project-header">
+            <h3>Nex Vibe Coding Platform</h3>
+            <span class="period">2025/12 — Present</span>
+          </div>
+          <p class="project-summary">Turn natural-language requests into working websites and applications.</p>
+          <ul>
+            <li>Led the evolution of the Nex Agent protocol from plain-text SSE and XML commands to native tool calls and WebSocket RPC, covering the agent, frontend consumers, unit tests and removal of the legacy protocol.</li>
+            <li>Designed Prechat/Postchat routing and Plan, Todo and askUser collaboration, using structured outputs, deterministic gates and completion checks to make complex tasks more controllable.</li>
+            <li>Evolved Subagents into an orchestrator built on planners, workers and a graph state machine, with layered gates, token budgets, pause/resume, reconnection, persistence and task visualization.</li>
+            <li>Built context-window management with hot/warm-zone compression, dynamic budgets, tool-message pairing, usage visualization and automatic compression and retry after overflow.</li>
+            <li>Established four layers of tool-execution reliability: frontend/backend timeouts, a serial shell queue, WebSocket circuit breaking and WebContainer health checks; addressed interrupted streams, concurrent writes and auto-repair races.</li>
+            <li>Built end-to-end agent diagnostics and telemetry from scratch, connecting quality events, tracing, error analysis, monthly token reports and operational views for session-level diagnosis.</li>
+          </ul>
+                  </div>
+          <aside class="project-visual single-shot" aria-label="Nex Vibe Coding PlatformPortfolio">
+            <figure class="work-shot">
+              <figcaption>Agent orchestration and live project preview</figcaption>
+              <a class="shot-link" href="https://cv-assets.yicong.me/releases/20261030-v1/resume/resources/Gallery/Nex/Xnip2026-09-16_09-25-25.png" data-lightbox aria-label="Agent orchestration and live project preview">
+                <img src="https://cv-assets.yicong.me/releases/20261030-v1/resume/resources/assets/gallery/nex-workspace.webp" width="1100" height="940" alt="Agent orchestration and live project preview" loading="lazy" decoding="async">
+              </a>
+            </figure>
+          </aside>
+        </article>
+
+        <article class="project" id="project-pgos">
+          <div class="project-content">
+          <div class="project-header">
+            <h3>PGOS Multiplayer Backend</h3>
+            <span class="period">2021 — Present</span>
+          </div>
+          <p class="project-summary">Match players, form teams and host dedicated game servers.</p>
+          <ul>
+            <li>Contributed to PGOS since 2021, covering competitor research, technology selection, project initiation, core development and launch.</li>
+            <li>Developed core services for game sessions, matchmaking and persistent connections, supporting rule-based teams, competitive matchmaking and session allocation.</li>
+            <li>Built configurable matchmaking with declarative rulesets and an expression engine to describe player attributes, team structures and multidimensional constraints, reducing repeated implementation across games.</li>
+            <li>Designed for fairness, search efficiency and queue time, with rules that relax as players wait, multiple matching modes and concurrent rulesets.</li>
+            <li>Helped build the matching platform with composite indexes, priority queues, ticket lifecycle management, a simulator and autoscaling for rule debugging and distributed execution.</li>
+            <li>Built DS Hosting, a flexible, autoscaling server-fleet management system for dedicated game servers.</li>
+            <li>Implemented Knative-based Virtual Server clusters so developers could extend PGOS through event-driven services.</li>
+          </ul>
+                  </div>
+          <aside class="project-visual single-shot" aria-label="PGOS Multiplayer BackendPortfolio">
+            <figure class="work-shot">
+              <figcaption>Matchmaking architecture</figcaption>
+              <a class="shot-link" href="https://cv-assets.yicong.me/releases/20261030-v1/resume/resources/Gallery/PGOS/匹配系统架构.png" data-lightbox aria-label="PGOS · Matchmaking architecture">
+                <img src="https://cv-assets.yicong.me/releases/20261030-v1/resume/resources/Gallery/PGOS/匹配系统架构.png" width="2192" height="1224" alt="PGOS · Matchmaking architecture" loading="lazy" decoding="async">
+              </a>
+            </figure>
+          </aside>
+        </article>
+
+        <article class="project" id="project-bot">
+          <div class="project-content">
+          <div class="project-header">
+            <h3>Bot Developer Platform</h3>
+            <span class="period">2018 — 2020</span>
+          </div>
+          <p class="project-summary">Let users ask for game knowledge and access services through conversation.</p>
+          <ul>
+            <li>Built a chatbot with Rasa NLU for intent recognition and slot extraction, using the NLU approach of early Siri-style assistants to answer game-knowledge, meeting-room booking and weather queries.</li>
+            <li>Built a containerized training platform to help improve classifier accuracy.</li>
+            <li>Developed a Bot framework with support for third-party integrations.</li>
+            <li>Open-sourced a text-adventure engine developed in my spare time: <a href="https://github.com/YicongCao/MarkdownGame">MarkdownGame</a>。</li>
+          </ul>
+                  </div>
+          <aside class="project-visual single-shot" aria-label="Bot Developer PlatformPortfolio">
+            <figure class="work-shot portrait">
+              <figcaption>Natural-language game recipe queries</figcaption>
+              <a class="shot-link" href="https://cv-assets.yicong.me/releases/20261030-v1/resume/resources/Gallery/Bot/LegoBot.png" data-lightbox aria-label="LegoBot · Natural-language game recipe queries">
+                <img src="https://cv-assets.yicong.me/releases/20261030-v1/resume/resources/assets/gallery/bot-lego.webp" width="700" height="1400" alt="LegoBot · Natural-language game recipe queries" loading="lazy" decoding="async">
+              </a>
+            </figure>
+          </aside>
+        </article>
+
+        <article class="project" id="project-accelerator">
+          <div class="project-content">
+          <div class="project-header">
+            <h3>Tencent Game Accelerator</h3>
+            <span class="period">2017/12 — 2018/10</span>
+          </div>
+          <p class="project-summary">Improve network connectivity and multiplayer experiences for PC games.</p>
+          <ul>
+            <li>Developed an LSP framework for local-proxy forwarding and custom protocols, supporting synchronous, asynchronous, event-based, overlapped, completion-routine and I/O completion-port networking models.</li>
+            <li>Improved network routes and NAT types to resolve connectivity issues in P2P games.</li>
+            <li>Developed a load-testing framework and worked with operations to stress-test backend network routes.</li>
+            <li>Developed an HTTP acceleration framework, proposed SOCKS5 system-proxy and DNS interception approaches, and used the latter to accelerate Steam Community access.</li>
+          </ul>
+                  </div>
+        </article>
+
+        <article class="project" id="project-desktop">
+          <div class="project-content">
+          <div class="project-header">
+            <h3>Android on Desktop</h3>
+            <span class="period">2017/9 — 2017/12</span>
+          </div>
+          <p class="project-summary">Use Android applications directly on a PC desktop.</p>
+          <ul>
+            <li>Built a desktop client around an Android emulator to run mobile apps such as Tiantian Kuaibao, Kuaishou and Douyin directly on a PC desktop.</li>
+            <li>Proposed and implemented interaction improvements, including a draggable back button and emulated hardware scroll-wheel input.</li>
+            <li>Implemented analytics instrumentation and analyzed user data.</li>
+          </ul>
+                  </div>
+          <aside class="project-visual single-shot" aria-label="Android on DesktopPortfolio">
+            <figure class="work-shot">
+              <figcaption>Mobile apps on desktop</figcaption>
+              <a class="shot-link" href="https://cv-assets.yicong.me/releases/20261030-v1/resume/resources/assets/gallery/desktop-apps.jpg" data-lightbox aria-label="Android on Desktop · Mobile apps on desktop">
+                <img src="https://cv-assets.yicong.me/releases/20261030-v1/resume/resources/assets/gallery/desktop-apps.jpg" width="1000" height="967" alt="Android on Desktop · Mobile apps on desktop" loading="lazy" decoding="async">
+              </a>
+            </figure>
+          </aside>
+        </article>
+
+        <article class="project" id="project-cleaner">
+          <div class="project-content">
+          <div class="project-header">
+            <h3>PC Manager Cleanup</h3>
+            <span class="period">2017/4 — 2017/8</span>
+          </div>
+          <p class="project-summary">Scan and remove unwanted files, exploring automatic identification.</p>
+          <ul>
+            <li>Developed PC Manager cleanup tools, analytics instrumentation and user-data analysis.</li>
+            <li>Combined Naive Bayes and TF-IDF to prototype path-based identification of unwanted files and wrote a patent application.</li>
+          </ul>
+                  </div>
+          <aside class="project-visual single-shot" aria-label="PC Manager CleanupPortfolio">
+            <figure class="work-shot portrait">
+              <figcaption>Standalone cleanup tool</figcaption>
+              <a class="shot-link" href="https://cv-assets.yicong.me/releases/20261030-v1/resume/resources/assets/gallery/cleaner.jpg" data-lightbox aria-label="PC Manager · Standalone cleanup tool">
+                <img src="https://cv-assets.yicong.me/releases/20261030-v1/resume/resources/assets/gallery/cleaner.jpg" width="600" height="875" alt="PC Manager · Standalone cleanup tool" loading="lazy" decoding="async">
+              </a>
+            </figure>
+          </aside>
+        </article>
+
+        <article class="project" id="project-win10">
+          <div class="project-content">
+          <div class="project-header">
+            <h3>PC Manager Win10 Assistant</h3>
+            <span class="period">2016/8 — 2017/3</span>
+          </div>
+          <p class="project-summary">Bring a familiar Start menu back to Windows 10.</p>
+          <ul>
+            <li>Developed a classic Start menu that recreated Windows 7-style functionality on Windows 10.</li>
+            <li>Developed a Win10 setup assistant to help users configure newly installed systems.</li>
+          </ul>
+                  </div>
+          <aside class="project-visual single-shot" aria-label="PC Manager Win10 AssistantPortfolio">
+            <figure class="work-shot portrait">
+              <figcaption>Classic Start menu</figcaption>
+              <a class="shot-link" href="https://cv-assets.yicong.me/releases/20261030-v1/resume/resources/Gallery/经典开始菜单2.png" data-lightbox aria-label="Win10 Assistant · Classic Start menu">
+                <img src="https://cv-assets.yicong.me/releases/20261030-v1/resume/resources/Gallery/经典开始菜单2.png" width="419" height="677" alt="Win10 Assistant · Classic Start menu" loading="lazy" decoding="async">
+              </a>
+            </figure>
+          </aside>
+        </article>
+
+        <article class="project" id="project-uwp">
+          <div class="project-content">
+          <div class="project-header">
+            <h3>Aikan Duanzi UWP</h3>
+            <span class="period">University · 2016</span>
+          </div>
+          <p class="project-summary">Bring content from multiple sites into one Windows application.</p>
+          <ul>
+            <li>Developed a UWP client and crawler API to aggregate more than ten sites, including Zhihu Daily, PingWest, Douban Yike and Jandan, into a card-based feed.</li>
+            <li>Submitted the application to the Windows Store under the name Aikan Duanzi.</li>
+            <li>Continually improved loading speed, responsive layouts and transitions for touch, mouse and keyboard, with bookmarking and export support.</li>
+          </ul>
+                  </div>
+          <aside class="project-visual single-shot" aria-label="Aikan Duanzi UWPPortfolio">
+            <figure class="work-shot">
+              <figcaption>A feed from multiple sources</figcaption>
+              <a class="shot-link" href="https://cv-assets.yicong.me/releases/20261030-v1/resume/resources/Gallery/爱看段子-0002.jpg" data-lightbox aria-label="Aikan Duanzi · A feed from multiple sources">
+                <img src="https://cv-assets.yicong.me/releases/20261030-v1/resume/resources/assets/gallery/uwp-reader.webp" width="720" height="541" alt="Aikan Duanzi · A feed from multiple sources" loading="lazy" decoding="async">
+              </a>
+            </figure>
+          </aside>
+        </article>
+
+        <article class="project" id="project-reader">
+          <div class="project-content">
+          <div class="project-header">
+            <h3>Jianzhi Reader</h3>
+            <span class="period">University · 2013</span>
+          </div>
+          <p class="project-summary">A reading product for the web and Windows Phone.</p>
+          <ul>
+            <li>Designed the product and independently built the frontend and backend with Python and Django, deploying it on Google App Engine.</li>
+            <li>Developed the Jianzhi Reader client for Windows Phone.</li>
+          </ul>
+                  </div>
+          <aside class="project-visual single-shot" aria-label="Jianzhi ReaderPortfolio">
+            <figure class="work-shot">
+              <figcaption>Desktop and mobile layouts</figcaption>
+              <a class="shot-link" href="https://cv-assets.yicong.me/releases/20261030-v1/resume/resources/Gallery/简致阅读/简致阅读 响应式设计.png" data-lightbox aria-label="Jianzhi Reader · Desktop and mobile layouts">
+                <img src="https://cv-assets.yicong.me/releases/20261030-v1/resume/resources/assets/gallery/jianzhi-reader.webp" width="1100" height="618" alt="Jianzhi Reader · Desktop and mobile layouts" loading="lazy" decoding="async">
+              </a>
+            </figure>
+          </aside>
+        </article>
+
+        <article class="project" id="project-kinect">
+          <div class="project-content">
+          <div class="project-header">
+            <h3>Exercise Bike Fitness and Gaming System</h3>
+            <span class="period">University · 2012</span>
+          </div>
+          <p class="project-summary">Connect fitness and gaming through Kinect motion recognition.</p>
+          <ul>
+            <li>Developed a Kinect client for an exercise bike, implementing motion recognition with the Kinect API.</li>
+          </ul>
+                  </div>
+        </article>
+
+        <article class="project" id="project-ishowfx">
+          <div class="project-content">
+          <div class="project-header">
+            <h3>iShowFX Image Downloader</h3>
+            <span class="period">High school · 2010</span>
+          </div>
+          <p class="project-summary">Discover, filter and download web images in batches.</p>
+          <ul>
+            <li>Developed an image-downloading tool with four batch-download modes.</li>
+            <li>Published on CRSKY and Duote, with resource discovery, batch page entry, multilevel URL analysis, page/image filtering, adaptive image sizing and search-engine support; reached over 10,000 downloads.</li>
+          </ul>
+                  </div>
+          <aside class="project-visual single-shot" aria-label="iShowFX Image DownloaderPortfolio">
+            <figure class="work-shot">
+              <figcaption>Image browsing and batch downloads</figcaption>
+              <a class="shot-link" href="https://cv-assets.yicong.me/releases/20261030-v1/resume/resources/Gallery/iShowFX2.PNG" data-lightbox aria-label="iShowFX · Image browsing and batch downloads">
+                <img src="https://cv-assets.yicong.me/releases/20261030-v1/resume/resources/assets/gallery/ishowfx.webp" width="854" height="569" alt="iShowFX · Image browsing and batch downloads" loading="lazy" decoding="async">
+              </a>
+            </figure>
+          </aside>
+        </article>
+      </div>
+    </section>
+
+    <section aria-labelledby="cert-title">
+      <h2 id="cert-title">Certifications and Honors</h2>
+      <ul class="cert-list">
+        <li>CET-6 English examination: 572</li>
+        <li>Patent: Distributed Fast Player Clustering System Based on Linear Programming</li>
+        <li>Patent: Personalized Dialogue System Based on a Game Knowledge Base</li>
+        <li>National First Prize, China Collegiate Computing Contest, 2014</li>
+        <li>First Prize, Microsoft Imagine Cup Northwest China Regional Competition, 2014 (Exercise Bike)</li>
+        <li>First Prize, Baidu Campus Programming Competition, 2013 (Jianzhi Reader)</li>
+      </ul>
+    </section>
+
+    <footer class="footer">Yicong Cao · Resume</footer>
+  </main>
+  <dialog class="image-viewer" aria-labelledby="viewer-caption">
+    <div class="viewer-toolbar">
+      <p id="viewer-caption"></p>
+      <button class="viewer-close" type="button" autofocus>Close · Esc</button>
+    </div>
+    <img class="viewer-image" alt="">
+  </dialog>
+  <script>
+    const viewer = document.querySelector('.image-viewer');
+    const viewerImage = viewer.querySelector('.viewer-image');
+    const viewerCaption = document.getElementById('viewer-caption');
+    document.querySelectorAll('[data-lightbox]').forEach(link => {
+      link.addEventListener('click', event => {
+        if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey || event.button !== 0 || !viewer.showModal) return;
+        event.preventDefault();
+        viewerImage.src = link.href;
+        viewerImage.alt = link.querySelector('img').alt;
+        viewerCaption.textContent = viewerImage.alt;
+        viewer.showModal();
+      });
+    });
+    viewer.querySelector('.viewer-close').addEventListener('click', () => viewer.close());
+    viewer.addEventListener('click', event => { if (event.target === viewer) {
+      const bounds = viewer.getBoundingClientRect();
+      if (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom) viewer.close();
+    }});
+  </script>
+</body>
+</html>
